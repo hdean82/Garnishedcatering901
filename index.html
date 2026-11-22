@@ -8,7 +8,7 @@ async function load(){try{
 const b=await req('/rest/v1/businesses?select=*&order=created_at.asc');
 if(!b.length){businessId=null;activeBusiness=null;state=emptyState();$('app').style.display='grid';$('content').innerHTML=`<div class="panel"><h1>Welcome to Garnished Catering</h1><p>Set up the business once, or join the existing workspace with an invitation code. Don't create a second business if Justin or your partner has already set one up.</p><div class="actions"><button class="btn" id="createWorkspace">Create Garnished workspace</button><button class="btn alt" id="joinWorkspace">Join with invite code</button></div></div>`;$('nav').innerHTML='';$('createWorkspace').onclick=async()=>{try{await req('/rest/v1/businesses','POST',{name:'Garnished Catering',owner_id:session.user.id});await load()}catch(e){toast(e.message)}};$('joinWorkspace').onclick=()=>joinWorkspace();return;}
 businessId=b[0].id;activeBusiness=b[0];state=emptyState();
-await Promise.all(tables.map(async t=>state[t]=await req('/rest/v1/'+t+'?select=*&'+(t==='businesses'?'id':'business_id')+'=eq.'+businessId+'&order=created_at.desc')));
+await Promise.all(tables.map(async t=>{const sort=t==='invoice_items'?'position.asc':t==='payments'?'paid_at.desc':'created_at.desc';state[t]=await req('/rest/v1/'+t+'?select=*&'+(t==='businesses'?'id':'business_id')+'=eq.'+encodeURIComponent(businessId)+'&order='+sort)}));
 state.business_invites=await req('/rest/v1/business_invites?select=*&business_id=eq.'+businessId+'&order=created_at.desc').catch(()=>[]);
 render()
 }catch(e){toast('Database: '+e.message);$('content').innerHTML='<div class="notice error">Could not load business records: '+esc(e.message)+'</div>'}}
