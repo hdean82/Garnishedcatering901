@@ -649,6 +649,7 @@ function editInvoice(id){
   choose('Status','status',statuses.map(s=>[s,s[0].toUpperCase()+s.slice(1)]))+
   field('Issue date','issue_date','date',true)+field('Due date','due_date','date')+
   field('Deposit required ($)','deposit_required','number')+
+  '<details class="invoice-more"><summary>More invoice details (optional)</summary><div class="formgrid">'+
   field('Sales tax amount ($)','tax_amount','number')+
   field('Discount amount ($)','discount_amount','number')+
   field('Client reference / PO number','reference_number')+
@@ -657,7 +658,7 @@ function editInvoice(id){
   area('Payment terms / due date conditions','payment_terms')+
   area('Accepted payment methods / instructions','payment_methods')+
   area('Additional invoice notes','notes')+
-  '</div><div class="actions" style="margin-top:16px"><button class="btn" type="submit">Save changes</button><button class="btn alt" type="button" id="cancelInvoiceEdit">Cancel</button></div></form>'
+  '</div></details></div><div class="actions" style="margin-top:16px"><button class="btn" type="submit">Save changes</button><button class="btn alt" type="button" id="cancelInvoiceEdit">Cancel</button></div></form>'
  );
  for(const key of ['invoice_number','customer_id','event_id','status','issue_date','due_date','deposit_required','tax_amount','discount_amount','reference_number','event_service_notes','payment_terms','payment_methods','notes']){
    const input=$('f_'+key);if(input)input.value=i[key]??'';
@@ -677,6 +678,18 @@ function editInvoice(id){
     return toast('That invoice number is already in use');
   if(['deposit_required','tax_amount','discount_amount'].some(k=>!Number.isFinite(patch[k])||patch[k]<0))
     return toast('Amounts must be zero or greater');
+  const wasClientVisible=['sent','partial','paid','overdue'].includes(i.status);
+  const willBeClientVisible=['sent','partial','paid','overdue'].includes(patch.status);
+  if(willBeClientVisible&&!patch.customer_id)return toast('Select a customer before making the invoice visible');
+  if(willBeClientVisible&&!state.invoice_items.some(x=>x.invoice_id===id))return toast('Add food or service items before making the invoice visible');
+  if((wasClientVisible||willBeClientVisible)&&(
+     i.customer_id!==patch.customer_id||i.status!==patch.status||
+     i.due_date!==patch.due_date||i.deposit_required!==patch.deposit_required||
+     i.tax_amount!==patch.tax_amount||i.discount_amount!==patch.discount_amount||
+     i.payment_terms!==patch.payment_terms||i.payment_methods!==patch.payment_methods||
+     i.notes!==patch.notes||i.invoice_number!==patch.invoice_number
+  )&&!confirm('This change affects an invoice that is, or may become, visible in the client portal. Save these changes? No email will be sent.'))return;
+
   try{await update('invoices',id,patch);openInvoice(id);toast('Invoice updated')}catch(err){toast('Could not save: '+err.message)}
  };
 }
