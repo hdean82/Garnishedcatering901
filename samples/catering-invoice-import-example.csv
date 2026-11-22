@@ -1,0 +1,3 @@
+invoice_number,customer_name,customer_email,issue_date,due_date,deposit_required,tax_amount,discount_amount,notes,item_description,quantity,unit_price
+GC-DEMO-001,Sample Customer,sample@example.com,2026-11-22,2026-12-01,100,0,0,Sample only - no actual order,Family catering package,1,285
+GC-DEMO-001,Sample Customer,sample@example.com,2026-11-22,2026-12-01,100,0,0,Sample only - no actual order,Delivery and setup,1,35
