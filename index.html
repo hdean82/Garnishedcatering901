@@ -54,18 +54,24 @@ state.business_invites=await req('/rest/v1/business_invites?select=*&business_id
 if(activeBusiness?.accent_color&&/^#[0-9a-f]{6}$/i.test(activeBusiness.accent_color))document.documentElement.style.setProperty('--brand-accent',activeBusiness.accent_color);
 render()
 }catch(e){toast('Database: '+e.message);$('content').innerHTML='<div class="notice error">Could not load business records: '+esc(e.message)+'</div>'}}
+async function claimTeamInvite(code){
+ const res=await fetch(URL+'/functions/v1/claim-garnished-team-invite',{method:'POST',headers:authHeader(),body:JSON.stringify({invitation_code:code})});
+ const data=await res.json().catch(()=>({}));
+ if(!res.ok||!data.accepted)throw Error(data.error||'Team invitation could not be accepted');
+ return true;
+}
 async function acceptPendingInvite(){
  const code=new URLSearchParams(location.search).get('invite')||safeStore.getItem('garnished_pending_invite');
  if(!code||!session?.access_token)return;
  safeStore.setItem('garnished_pending_invite',code);
  try{
-  await req('/rest/v1/rpc/claim_garnished_invite','POST',{invitation_code:code});
+  await claimTeamInvite(code);
   safeStore.removeItem('garnished_pending_invite');
   history.replaceState(null,'',location.pathname);
   toast('Invitation accepted — welcome to Garnished Catering');
  }catch(e){toast('Invitation: '+e.message)}
 }
-function joinWorkspace(){openModal('Join a shared workspace',`<p>Paste the one-time code sent by the Garnished Catering workspace owner.</p><form id="joinForm"><label>Invitation code</label><input id="joinCode" required placeholder="Paste your code"><button class="btn" style="margin-top:12px">Join workspace</button></form>`);$('joinForm').onsubmit=async e=>{e.preventDefault();try{await req('/rest/v1/rpc/claim_garnished_invite','POST',{invitation_code:$('joinCode').value.trim()});closeModal();await load();toast('You joined the Garnished Catering team')}catch(err){toast('Could not join: '+err.message)}}}
+function joinWorkspace(){openModal('Join a shared workspace',`<p>Paste the one-time code sent by the Garnished Catering workspace owner.</p><form id="joinForm"><label>Invitation code</label><input id="joinCode" required placeholder="Paste your code"><button class="btn" style="margin-top:12px">Join workspace</button></form>`);$('joinForm').onsubmit=async e=>{e.preventDefault();try{await claimTeamInvite($('joinCode').value.trim());closeModal();await load();toast('You joined the Garnished Catering team')}catch(err){toast('Could not join: '+err.message)}}}
 function teamPage(){
  const owner=activeBusiness?.owner_id===session?.user?.id;
  const invites=(state.business_invites||[]).filter(x=>!x.claimed_at&&new Date(x.expires_at)>new Date());
