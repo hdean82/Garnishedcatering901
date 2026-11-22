@@ -329,7 +329,7 @@ async function requestPasswordReset(){
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ $('authError').innerHTML='<div class="notice error">Enter your email address first.</div>';return }
  const btn=$('forgotPassword');btn.disabled=true;btn.textContent='Sending…';
  try{
-  const resetTo='https://garnishedcatering901.netlify.app/';
+  const resetTo=location.origin+'/';
   const res=await fetch(URL+'/auth/v1/recover?redirect_to='+encodeURIComponent(resetTo),{
    method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email})
   });
@@ -340,7 +340,7 @@ async function requestPasswordReset(){
  finally{btn.disabled=false;btn.textContent='Forgot password?'}
 }
 function showAuth(){const loggedIn=Boolean(session?.access_token);$('authBox').style.display=loggedIn?'none':'block';$('app').style.display=loggedIn?'grid':'none';$('signout').classList.toggle('hide',!loggedIn);$('modeBadge').textContent=loggedIn?'Garnished database':'Sign in required';if(loggedIn)acceptPendingInvite().then(()=>load())}
-async function auth(kind){try{const email=$('email').value.trim(),password=$('password').value;if(!email||password.length<8)throw Error('Use an email and password of at least 8 characters.');const response=await fetch(URL+(kind==='signup'?'/auth/v1/signup':'/auth/v1/token?grant_type=password'),{method:'POST',headers:{'apikey':KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password})});const data=await response.json();if(!response.ok)throw Error(data.msg||data.error_description||data.message||'Authentication failed');if(!data.access_token){$('authError').innerHTML='<div class="notice">Account created. Check your email to verify your account, then sign in. If you do not see the email, check Spam or Junk and mark Garnished Catering as Not Spam.</div>';return}session=data;safeStore.setItem('garnished_session',JSON.stringify(session));showAuth();toast('Signed in successfully')}catch(e){$('authError').innerHTML='<div class="notice error">'+esc(e.message)+'</div>'}}
+async function auth(kind){try{const email=$('email').value.trim(),password=$('password').value;if(!email||password.length<8)throw Error('Use an email and password of at least 8 characters.');const response=await fetch(URL+(kind==='signup'?'/auth/v1/signup?redirect_to='+encodeURIComponent(location.origin+'/'):'/auth/v1/token?grant_type=password'),{method:'POST',headers:{'apikey':KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password})});const data=await response.json();if(!response.ok)throw Error(data.msg||data.error_description||data.message||'Authentication failed');if(!data.access_token){$('authError').innerHTML='<div class="notice">Account created. Check your email to verify your account, then sign in. If you do not see the email, check Spam or Junk and mark Garnished Catering as Not Spam.</div>';return}session=data;safeStore.setItem('garnished_session',JSON.stringify(session));showAuth();toast('Signed in successfully')}catch(e){$('authError').innerHTML='<div class="notice error">'+esc(e.message)+'</div>'}}
 $('togglePassword').onclick=()=>{const field=$('password'),btn=$('togglePassword');const visible=field.type==='password';field.type=visible?'text':'password';btn.textContent=visible?'Hide':'Show';btn.setAttribute('aria-label',visible?'Hide password':'Show password');btn.setAttribute('aria-pressed',String(visible))};$('forgotPassword').onclick=requestPasswordReset;$('login').onclick=()=>auth('signin');$('signup').onclick=()=>auth('signup');$('signout').onclick=()=>{session=null;safeStore.removeItem('garnished_session');showAuth();toast('Signed out')};try{session=JSON.parse(safeStore.getItem('garnished_session'))}catch{session=null}
 const inviteCode=new URLSearchParams(location.search).get('invite');
 if(inviteCode)safeStore.setItem('garnished_pending_invite',inviteCode);
@@ -353,8 +353,8 @@ if(callback.get('access_token')){
   session.user=user;safeStore.setItem('garnished_session',JSON.stringify(session));
   history.replaceState(null,'',location.pathname+location.search);
   showAuth();
-  openModal('Set your password','<p>Set a password to sign in next time.</p><form id="setPasswordForm"><label for="newPassword">New password</label><input id="newPassword" type="password" minlength="8" required><button class="btn" style="margin-top:12px" type="submit">Save password</button></form>');
-  $('setPasswordForm').onsubmit=async e=>{
+  if(callback.get('type')==='recovery')openModal('Set your password','<p>Set a password to sign in next time.</p><form id="setPasswordForm"><label for="newPassword">New password</label><input id="newPassword" type="password" minlength="8" required><button class="btn" style="margin-top:12px" type="submit">Save password</button></form>');
+  if($('setPasswordForm'))$('setPasswordForm').onsubmit=async e=>{
    e.preventDefault();
    const res=await fetch(URL+'/auth/v1/user',{method:'PUT',headers:authHeader(),body:JSON.stringify({password:$('newPassword').value})});
    if(!res.ok){const data=await res.json().catch(()=>({}));toast(data.msg||data.message||'Could not save password');return}
