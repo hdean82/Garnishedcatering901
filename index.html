@@ -40,7 +40,14 @@ async function req(path,method='GET',body){
 }
 async function load(){try{
 const b=await req('/rest/v1/businesses?select=*&order=created_at.asc');
-if(!b.length){businessId=null;activeBusiness=null;state=emptyState();$('app').style.display='grid';$('content').innerHTML=`<div class="panel"><h1>Welcome to Garnished Catering</h1><p>Set up the business once, or join the existing workspace with an invitation code. Don't create a second business if Justin or your partner has already set one up.</p><div class="actions"><button class="btn" id="createWorkspace">Create Garnished workspace</button><button class="btn alt" id="joinWorkspace">Join with invite code</button></div></div>`;$('nav').innerHTML='';$('createWorkspace').onclick=async()=>{try{await req('/rest/v1/businesses','POST',{name:'Garnished Catering',owner_id:session.user.id});await load()}catch(e){toast(e.message)}};$('joinWorkspace').onclick=()=>joinWorkspace();return;}
+if(!b.length){
+ businessId=null;activeBusiness=null;state=emptyState();
+ $('app').style.display='grid';$('nav').innerHTML='';$('nav').style.display='none';
+ $('content').innerHTML='<div class="panel"><h1>Garnished Catering Studio</h1><p>This sign-in does not currently have staff access to the Garnished Catering workspace.</p>'+
+ '<div class="actions"><button class="btn alt" id="joinWorkspace">Join with team invitation code</button><a class="btn alt" href="/?client=1">Go to my client account</a></div>'+
+ '<p class="small">Only invited team members can see internal business information.</p></div>';
+ $('joinWorkspace').onclick=()=>joinWorkspace();return;
+}
 businessId=b[0].id;activeBusiness=b[0];state=emptyState();
 await Promise.all(tables.map(async t=>{const sort=t==='invoice_items'?'position.asc':t==='payments'?'paid_at.desc':'created_at.desc';state[t]=await req('/rest/v1/'+t+'?select=*&'+(t==='businesses'?'id':'business_id')+'=eq.'+encodeURIComponent(businessId)+'&order='+sort)}));
 state.business_invites=await req('/rest/v1/business_invites?select=*&business_id=eq.'+businessId+'&order=created_at.desc').catch(()=>[]);state.garnished_client_invites=await req('/rest/v1/garnished_client_invites?select=*&business_id=eq.'+businessId+'&order=created_at.desc').catch(()=>[]);
