@@ -961,14 +961,15 @@ function clientPortalHtml(accounts){
  if(clientPortalTab==='invoices'){
   html+='<section class="panel"><div class="actions" style="justify-content:space-between;align-items:center"><h1>My invoices</h1><button class="btn alt" id="clientPortalRefresh" type="button">Refresh</button></div>';
   if(!all.length)html+='<p>No invoices are available for your account yet.</p>';
-  for(const {invoice:i} of all){
-   const invoiceIndex=all.findIndex(x=>x.invoice===i);
+  for(const [invoiceIndex,{invoice:i}] of all.entries()){
    const {subtotal,total,paid,balance}=clientInvoiceFigures(i);
    html+='<article class="client-invoice" data-client-invoice-card="'+invoiceIndex+'"><div class="actions" style="justify-content:space-between;align-items:center"><h2>Invoice '+esc(i.invoice_number)+'</h2><span class="pill">'+esc(i.status)+'</span></div>'+
     '<p class="muted">Issued '+fmt(i.issue_date)+' · Due '+fmt(i.due_date)+'</p>'+
     (i.items||[]).map(x=>'<div class="item"><div><strong>'+esc(x.description)+'</strong><p class="muted">'+esc(x.item_category||'Catering item')+'</p></div><span>'+esc(x.quantity)+' × '+money(x.unit_price)+'</span></div>').join('')+
     '<div class="right"><p>Subtotal: '+money(subtotal)+' · Tax: '+money(i.tax_amount)+' · Discount: '+money(i.discount_amount)+'</p>'+
-    '<p>Total: '+money(total)+' · Paid: '+money(paid)+'</p><h2>Balance due '+money(balance)+'</h2></div>'+ 
+    '<p>Total: '+money(total)+' · Paid: '+money(paid)+'</p>'+
+    (Number(i.deposit_required)>0?'<p>Deposit requested: '+money(i.deposit_required)+'</p>':'')+
+    '<h2>Balance due '+money(balance)+'</h2></div>'+ 
     '<div class="actions" style="margin-top:12px"><button type="button" class="btn alt" data-client-print="'+invoiceIndex+'">Print / Save PDF</button></div></article>';
   }
   html+='</section>';
