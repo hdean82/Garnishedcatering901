@@ -1,0 +1,30 @@
+import { createClient } from "npm:@supabase/supabase-js@2.57.0";
+const ORIGINS=new Set(["https://garnishedcatering901.garnishedcatering.workers.dev","https://garnishedcatering901.netlify.app"]);
+const headers=o=>({"Access-Control-Allow-Origin":ORIGINS.has(o)?o:"https://garnishedcatering901.garnishedcatering.workers.dev","Access-Control-Allow-Headers":"authorization,apikey,content-type","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json","Vary":"Origin"});
+Deno.serve(async req=>{
+ const origin=req.headers.get("origin")||"",reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:headers(origin)});
+ if(!ORIGINS.has(origin))return reply({error:"Origin not allowed"},403);
+ if(req.method==="OPTIONS")return new Response(null,{headers:headers(origin)});
+ if(req.method!=="POST")return reply({error:"Method not allowed"},405);
+ const jwt=(req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"");
+ const URL=Deno.env.get("SUPABASE_URL")||"",KEY=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
+ if(!URL||!KEY)return reply({error:"Client access unavailable"},503);
+ const db=createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false}});
+ const {data:{user},error:authError}=await db.auth.getUser(jwt);
+ if(authError||!user?.email||!user.email_confirmed_at)return reply({error:"Sign in with the verified invited email"},401);
+ let input;try{input=await req.json()}catch{return reply({error:"Invalid request"},400)}
+ const code=String(input.invitation_code||"");
+ if(!/^[0-9a-f-]{36}$/i.test(code))return reply({error:"Invalid invitation code"},400);
+ const {data:invite,error:inviteError}=await db.from("garnished_client_invites").select("id,business_id,customer_id,recipient_email,expires_at,claimed_by,claimed_at").eq("code",code).maybeSingle();
+ if(inviteError||!invite)return reply({error:"Client invitation not found"},404);
+ if(invite.claimed_at)return reply({error:"Invitation has already been used"},409);
+ if(new Date(invite.expires_at)<=new Date())return reply({error:"Invitation expired"},410);
+ if(String(invite.recipient_email).toLowerCase()!==user.email.toLowerCase())return reply({error:"Use the email address that received the invitation"},403);
+ const {data:customer}=await db.from("customers").select("id").eq("id",invite.customer_id).eq("business_id",invite.business_id).maybeSingle();
+ if(!customer)return reply({error:"Customer record unavailable"},404);
+ const {error:accessError}=await db.from("garnished_client_access").upsert({business_id:invite.business_id,customer_id:invite.customer_id,user_id:user.id},{onConflict:"business_id,customer_id,user_id",ignoreDuplicates:true});
+ if(accessError)return reply({error:"Unable to activate client access"},500);
+ const {error:doneError}=await db.from("garnished_client_invites").update({claimed_by:user.id,claimed_at:new Date().toISOString()}).eq("id",invite.id).is("claimed_at",null);
+ if(doneError)return reply({error:"Client access created; refresh your account to continue"},500);
+ return reply({accepted:true});
+});
