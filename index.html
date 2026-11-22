@@ -3,7 +3,31 @@
 </style></head><body><header><div class="brand" style="display:flex;align-items:center;gap:9px"><img src="/assets/garnished-logo.jpg" alt="Garnished Catering 901 logo" style="width:50px;height:50px;object-fit:contain;border-radius:50%" onerror="this.style.display='none'"><div>GARNISH<span class="leaf">.</span>ED<small>catering & events</small></div></div><div class="actions"><span id="modeBadge">Garnished Catering</span><button class="btn alt hide" id="signout">Sign out</button></div></header><div id="authBox" class="panel login"><div style="text-align:center"><img src="/assets/garnished-logo.jpg" alt="Garnished Catering 901 logo" style="width:125px;border-radius:50%" onerror="this.style.display='none'"></div><h1>Sign in to Garnished</h1><p>Use a private account to save records in the Garnished Catering Supabase project.</p><label>Email</label><input id="email" type="email" autocomplete="email" placeholder="name@example.com"><label for="password">Password</label><div style="position:relative"><input id="password" type="password" autocomplete="current-password" placeholder="At least 8 characters" style="padding-right:78px"><button type="button" id="togglePassword" aria-label="Show password" aria-pressed="false" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:#e9eee8;color:#31503b;border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600">Show</button></div><div class="actions" style="margin-top:16px"><button class="btn" id="login">Sign in</button><button class="btn alt" id="signup">Create account</button></div><p class="small" style="margin-top:12px">Account registration may require email verification. No live emails or payment requests are sent by this app.</p><div id="authError"></div></div><div id="app" class="wrap" style="display:none"><aside class="nav" id="nav"><button class="active" data-view="dashboard">Overview</button><button class="" data-view="events">Events</button><button class="" data-view="planner">Event planner</button><button class="" data-view="tasks">Tasks</button><button class="" data-view="messages">Team messages</button><button class="" data-view="customers">Customers</button><button class="" data-view="invoices">Invoices</button><button class="" data-view="shopping_items">Shopping &amp; prep</button></aside><main><div id="content"><div class="actions" style="justify-content:space-between;align-items:end"><div><h1>Good to have it all in one place</h1><p>Your Garnished Catering command center</p></div></div><div class="actions" style="margin-bottom:14px"><button class="btn alt" onclick="view='planner';render()">Open event prep planner</button></div><div class="cards"><div class="panel"><div class="muted">Upcoming events</div><div class="metric">0</div></div><div class="panel"><div class="muted">Open tasks</div><div class="metric">0</div></div><div class="panel"><div class="muted">Unpaid invoices</div><div class="metric">0</div></div><div class="panel"><div class="muted">Outstanding</div><div class="metric" style="font-size:22px">$0.00</div></div></div><div class="cols"><div class="panel"><h2>Next catering events</h2><div class="empty">No upcoming events yet</div><button class="btn alt" onclick="view='events';render()">View events</button></div><div class="panel"><h2>What needs doing</h2><div class="empty">You are caught up on tasks</div><button class="btn alt" onclick="view='tasks';render()">All tasks</button></div></div><div class="notice">Reminders are saved as dates in the app. Automatic phone alerts and email delivery are not enabled in this prototype.</div></div></main></div><div id="modal"><div class="dialog"><div class="actions" style="justify-content:space-between"><h2 id="modalTitle"></h2><button class="btn alt" onclick="closeModal()">Close</button></div><div id="modalBody"></div></div></div><div id="toast"></div><div id="invoicePrint"></div><script>
 const URL='https://vufrlkxftvpouhsqlmpb.supabase.co', KEY='sb_publishable_N7B1IsbiN_uqydSICjanYw_wNVNmuHV';const tables=['businesses','business_members','customers','events','tasks','messages','invoices','invoice_items','payments','shopping_items'];const sections=[['dashboard','Overview'],['events','Events'],['planner','Event planner'],['tasks','Tasks'],['messages','Team messages'],['customers','Customers'],['invoices','Invoices'],['shopping_items','Shopping & prep'],['team','Team access']];let view='dashboard',session=null,businessId=null,state={},activeBusiness=null;const safeStore={getItem(k){try{return localStorage.getItem(k)}catch{return null}},setItem(k,v){try{localStorage.setItem(k,v)}catch{}},removeItem(k){try{localStorage.removeItem(k)}catch{}}};const $=id=>document.getElementById(id), esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])), fmt=x=>x?new Date(x).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'No date',money=n=>'$'+Number(n||0).toFixed(2), uid=()=>globalThis.crypto?.randomUUID?.()||'id-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2), now=()=>new Date().toISOString();
 function toast(s){$('toast').textContent=s;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',3500)}function emptyState(){return Object.fromEntries(tables.map(t=>[t,[]]))}function authHeader(){return {'apikey':KEY,'Authorization':'Bearer '+(session?.access_token||KEY),'Content-Type':'application/json'}}
-async function req(path,method='GET',body){const r=await fetch(URL+path,{method,headers:{...authHeader(),...(method!=='GET'?{'Prefer':'return=representation'}:{})},body:body?JSON.stringify(body):undefined});let out=await r.json().catch(()=>null);if(!r.ok)throw Error(out?.msg||out?.message||out?.error_description||out?.error||('HTTP '+r.status));return out}
+let refreshPromise=null;
+async function refreshSession(){
+ if(refreshPromise)return refreshPromise;
+ refreshPromise=(async()=>{
+  if(!session?.refresh_token)return false;
+  try{
+   const res=await fetch(URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:session.refresh_token})});
+   const updated=await res.json();
+   if(!res.ok||!updated.access_token)return false;
+   session={...session,...updated,user:updated.user||session.user};
+   safeStore.setItem('garnished_session',JSON.stringify(session));return true;
+  }catch{return false}
+ })();
+ try{return await refreshPromise}finally{refreshPromise=null}
+}
+async function req(path,method='GET',body){
+ async function send(){return fetch(URL+path,{method,headers:{...authHeader(),...(method!=='GET'?{'Prefer':'return=representation'}:{})},body:body?JSON.stringify(body):undefined})}
+ let r=await send();
+ if(r.status===401&&session?.refresh_token){
+  if(await refreshSession())r=await send();
+  else{session=null;safeStore.removeItem('garnished_session');showAuth();throw Error('Your session expired. Sign in again.')}
+ }
+ const out=await r.json().catch(()=>null);
+ if(!r.ok)throw Error(out?.msg||out?.message||out?.error_description||out?.error||('HTTP '+r.status));return out
+}
 async function load(){try{
 const b=await req('/rest/v1/businesses?select=*&order=created_at.asc');
 if(!b.length){businessId=null;activeBusiness=null;state=emptyState();$('app').style.display='grid';$('content').innerHTML=`<div class="panel"><h1>Welcome to Garnished Catering</h1><p>Set up the business once, or join the existing workspace with an invitation code. Don't create a second business if Justin or your partner has already set one up.</p><div class="actions"><button class="btn" id="createWorkspace">Create Garnished workspace</button><button class="btn alt" id="joinWorkspace">Join with invite code</button></div></div>`;$('nav').innerHTML='';$('createWorkspace').onclick=async()=>{try{await req('/rest/v1/businesses','POST',{name:'Garnished Catering',owner_id:session.user.id});await load()}catch(e){toast(e.message)}};$('joinWorkspace').onclick=()=>joinWorkspace();return;}
@@ -75,6 +99,22 @@ return header('Good to have it all in one place','Your Garnished Catering comman
 `<div class="cols"><div class="panel"><h2>Next catering events</h2>${eventRows||'<div class="empty">No upcoming events yet</div>'}<button class="btn alt" onclick="view='events';render()">View events</button></div><div class="panel"><h2>What needs doing</h2>${taskRows||'<div class="empty">You are caught up on tasks</div>'}<button class="btn alt" onclick="view='tasks';render()">All tasks</button></div></div>`+
 `<div class="notice">${overdue.length?'⚠ '+overdue.length+' overdue task(s) need attention. ':''}Reminders are saved as dates in the app. Automatic phone alerts and email delivery are not enabled in this prototype.</div>`;
 }
+let messagePollInFlight=false;
+async function refreshMessagesQuietly(){
+ if(messagePollInFlight||view!=='messages'||!session?.access_token||document.visibilityState==='hidden'||$('modal')?.classList.contains('open'))return;
+ const draft=$('messageBody');
+ if(draft&&(document.activeElement===draft||draft.value.trim()))return;
+ messagePollInFlight=true;
+ try{
+  const latest=await req('/rest/v1/messages?select=*&business_id=eq.'+encodeURIComponent(businessId)+'&order=created_at.desc');
+  const old=state.messages||[];
+  if(latest.length!==old.length||latest.some((m,i)=>m.id!==old[i]?.id||m.body!==old[i]?.body)){
+   state.messages=latest;render();
+  }
+ }catch(e){if(!session)toast('Sign in again to see messages')}
+ finally{messagePollInFlight=false}
+}
+setInterval(refreshMessagesQuietly,12000);
 function messagePage(){
  const msgs=[...(state.messages||[])].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
  const people=new Map();
