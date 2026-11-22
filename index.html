@@ -1249,12 +1249,23 @@ if(callback.get('access_token')){
   session.user=user;safeStore.setItem('garnished_session',JSON.stringify(session));
   history.replaceState(null,'',location.pathname+location.search);
   showAuth();
-  if(['recovery','invite'].includes(callback.get('type')))openModal('Set your password','<p>Set a password to sign in next time.</p><form id="setPasswordForm"><label for="newPassword">New password</label><input id="newPassword" type="password" minlength="8" required><button class="btn" style="margin-top:12px" type="submit">Save password</button></form>');
+  if(['recovery','invite'].includes(callback.get('type')))openModal('Set your password','<p>Set a password to sign in next time.</p><form id="setPasswordForm"><label for="newPassword">New password</label><input id="newPassword" type="password" autocomplete="new-password" minlength="8" required><label for="newPasswordConfirm">Confirm password</label><input id="newPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required><label class="account-show-password"><input type="checkbox" id="showRecoveryPassword"> Show passwords</label><button class="btn" id="saveRecoveredPassword" style="margin-top:12px" type="submit">Save password</button></form>');
+  if($('showRecoveryPassword'))$('showRecoveryPassword').onchange=()=>{
+   const mode=$('showRecoveryPassword').checked?'text':'password';
+   $('newPassword').type=mode;$('newPasswordConfirm').type=mode;
+  };
   if($('setPasswordForm'))$('setPasswordForm').onsubmit=async e=>{
    e.preventDefault();
-   const res=await fetch(URL+'/auth/v1/user',{method:'PUT',headers:authHeader(),body:JSON.stringify({password:$('newPassword').value})});
-   if(!res.ok){const data=await res.json().catch(()=>({}));toast(data.msg||data.message||'Could not save password');return}
-   closeModal();toast('Password saved');
+   const one=$('newPassword').value,two=$('newPasswordConfirm').value;
+   if(one.length<8)return toast('Use a password with at least 8 characters');
+   if(one!==two)return toast('Passwords do not match');
+   const btn=$('saveRecoveredPassword');btn.disabled=true;btn.textContent='Saving…';
+   try{
+    const res=await fetch(URL+'/auth/v1/user',{method:'PUT',headers:authHeader(),body:JSON.stringify({password:one})});
+    if(!res.ok){const data=await res.json().catch(()=>({}));throw Error(data.msg||data.message||'Could not save password')}
+    $('newPassword').value='';$('newPasswordConfirm').value='';
+    closeModal();toast('Password saved');
+   }catch(err){toast(err.message)}finally{btn.disabled=false;btn.textContent='Save password'}
   };
  }).catch(()=>showAuth());
 }else showAuth();
