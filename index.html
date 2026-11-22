@@ -77,8 +77,10 @@ async function createInvite(e){
  try{
  const result=await fetch(URL+'/functions/v1/send-garnished-invite',{method:'POST',headers:authHeader(),body:JSON.stringify({email,role,business_id:businessId})});
  const data=await result.json().catch(()=>({}));
- if(!result.ok||!data.sent)throw Error(data.error||'Invitation could not be sent');
- toast('Invitation submitted for '+email+'. Ask the recipient to check Inbox and Spam/Junk.');await load();
+ if(!result.ok)throw Error(data.error||'Invitation could not be created');
+ if(data.manual){await load();view='team';render();toast('Email not delivered. A pending invitation link is available below to copy and share securely.');return}
+ if(!data.sent)throw Error(data.error||'Invitation could not be sent');
+ toast('Invitation email accepted for delivery to '+email+'. Ask the recipient to check Inbox and Spam/Junk.');await load();
  }catch(error){toast(error.message);btn.disabled=false;btn.textContent='Send invitation email'}
 }
 async function add(t,obj){const made=await req('/rest/v1/'+t,'POST',{business_id:businessId,...obj});await load();return made[0]}
@@ -220,18 +222,19 @@ function openInvoiceImport(){
  $('importPreview').innerHTML='<strong>'+grouped.size+' invoices · '+entries.length+' items · '+money(total)+'</strong><p>'+[...grouped.keys()].slice(0,12).map(esc).join(', ')+'</p>'+(duplicates.length?'<p style="color:#a52f27">Already in workspace: '+duplicates.map(esc).join(', ')+' — remove duplicates before importing.</p>':'<p>Review the file before confirming. Import will save to your workspace, but will not send emails.</p>');
  $('confirmImport').disabled=duplicates.length>0;
  }catch(err){entries=[];$('confirmImport').disabled=true;$('importPreview').textContent=err.message}};
- $('confirmImport').onclick=async()=>{if(!entries.length)return;const btn=$('confirmImport');btn.disabled=true;btn.textContent='Importing…';let added=0;
- try{const grouped=new Map;for(const row of entries){if(!grouped.has(row.invoice_number))grouped.set(row.invoice_number,[]);grouped.get(row.invoice_number).push(row)}
- for(const [number,lines] of grouped){const r=lines[0];let customer=state.customers.find(c=>c.name.toLowerCase()===r.customer_name.toLowerCase());
- if(!customer){const result=await add('customers',{name:r.customer_name,email:r.customer_email||null});customer=result}
- if(state.invoices.some(x=>x.invoice_number.toLowerCase()===number.toLowerCase()))throw Error('Invoice '+number+' already exists'); const invoice=await add('invoices',{invoice_number:number,customer_id:customer.id,issue_date:r.issue_date||localCalendarDate(),due_date:r.due_date||null,deposit_required:Number(r.deposit_required||0),tax_amount:Number(r.tax_amount||0),discount_amount:Number(r.discount_amount||0),notes:r.notes||''});
- for(const line of lines)await add('invoice_items',{invoice_id:invoice.id,description:line.item_description,quantity:line.quantity,unit_price:line.unit_price});
- added++;
- }
- closeModal();view='invoices';await load();toast(added+' invoices imported. No emails were sent.');
- }catch(err){btn.textContent='Import previewed invoices';$('importPreview').textContent='Imported '+added+' complete invoices before stopping: '+err.message+'. Check the invoice list before retrying.'}
- };
-}
+ $('confirmImport').onclick=async()=>{
+  if(!entries.length)return;
+  const btn=$('confirmImport');btn.disabled=true;btn.textContent='Importing…';
+  try{
+    const result=await req('/rest/v1/rpc/import_garnished_invoices','POST',{p_business_id:businessId,p_rows:entries});
+    const counts=Array.isArray(result)?result[0]:result;
+    closeModal();view='invoices';await load();
+    toast((counts?.imported_invoices??0)+' invoices imported successfully. No emails were sent.');
+  }catch(err){
+    btn.disabled=false;btn.textContent='Import previewed invoices';
+    $('importPreview').textContent='Import was not completed: '+err.message+'. No partial invoices should be saved by the transactional import function.';
+  }
+ };}
 
 function invoiceList(){return header('Invoices & payments','Build invoices, add items, record payments, and print a client copy','invoices')+`<div class="panel"><div class="actions"><button class="btn alt" id="importInvoices">Import invoice CSV</button></div><p class="small">Import a CSV with invoice_number, customer_name, item_description, quantity, unit_price, and optional dates, taxes, discounts and deposits. Preview before importing; no email is sent.</p></div><div class="panel">${state.invoices.length?state.invoices.map(i=>`<div class="item"><div><strong>${esc(i.invoice_number)} · ${esc(person(i.customer_id))}</strong><div class="muted">${esc(i.status)} · Due ${fmt(i.due_date)} · Total ${money(invoiceTotal(i.id))} · Paid ${money(invoicePaid(i.id))}</div></div><button class="btn alt" data-openinvoice="${i.id}">Open</button></div>`).join(''):'<div class="empty">No invoices yet. Create one above.</div>'}</div>`}
 function openModal(title,body){$('modalTitle').textContent=title;$('modalBody').innerHTML=body;$('modal').classList.add('open')}function closeModal(){$('modal').classList.remove('open')}window.closeModal=closeModal;
