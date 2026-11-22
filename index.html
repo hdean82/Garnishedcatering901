@@ -65,7 +65,7 @@ function teamPage(){
  html+='</div>';
  if(owner){
  html+='<div class="panel"><h2>Pending invitations</h2>';
- html+=invites.map(x=>'<div class="item"><div><strong>'+esc(x.recipient_email||'Invite')+'</strong><div class="muted">'+esc(x.role)+' · Expires '+fmt(x.expires_at)+'</div><button class="btn alt" data-copy="'+esc('https://garnishedcatering901.netlify.app/?invite='+x.code)+'">Copy invitation link</button></div></div>').join('')||'<p>No pending invitations</p>';
+ html+=invites.map(x=>'<div class="item"><div><strong>'+esc(x.recipient_email||'Invite')+'</strong><div class="muted">'+esc(x.role)+' · Expires '+fmt(x.expires_at)+'</div><button class="btn alt" data-copy="'+esc(location.origin+'/?invite='+x.code)+'">Copy invitation link</button></div></div>').join('')||'<p>No pending invitations</p>';
  html+='</div>';
  }
  return html;
