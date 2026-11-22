@@ -911,6 +911,26 @@ function renderClientPortal(){
  $('content').innerHTML=clientPortalHtml(clientPortalAccounts);
  document.querySelectorAll('[data-client-tab]').forEach(b=>b.onclick=()=>{clientPortalTab=b.dataset.clientTab;renderClientPortal()});
  if($('clientPortalRefresh'))$('clientPortalRefresh').onclick=loadClientPortal;
+ document.querySelectorAll('[data-client-print]').forEach(button=>button.onclick=()=>printClientInvoiceCopy(button.dataset.clientPrint));
+}
+function printClientInvoiceCopy(index){
+ if(!CLIENT_MODE)return;
+ const n=Number(index);
+ if(!Number.isSafeInteger(n)||n<0)return;
+ const invoices=clientPortalAccounts.flatMap(a=>(a.invoices||[]).map(i=>({account:a,invoice:i})));
+ const selected=invoices[n];
+ const card=document.querySelector('[data-client-invoice-card="'+n+'"]');
+ const output=$('invoicePrint');
+ if(!selected||!card||!output)return toast('Could not prepare invoice copy');
+ const content=card.cloneNode(true);
+ content.querySelectorAll('button').forEach(button=>button.remove());
+ const title=document.createElement('div');
+ title.style.cssText='border-bottom:2px solid #425f49;padding-bottom:14px;margin-bottom:20px';
+ const business=document.createElement('h1');business.textContent=selected.account.business.name||'Garnished Catering';
+ const customer=document.createElement('p');customer.textContent='Prepared for '+selected.account.customer.name;
+ title.append(business,customer);
+ output.replaceChildren(title,content);
+ window.print();
 }
 function clientPortalHtml(accounts){
  const all=accounts.flatMap(account=>(account.invoices||[]).map(i=>({account,invoice:i})));
@@ -942,12 +962,14 @@ function clientPortalHtml(accounts){
   html+='<section class="panel"><div class="actions" style="justify-content:space-between;align-items:center"><h1>My invoices</h1><button class="btn alt" id="clientPortalRefresh" type="button">Refresh</button></div>';
   if(!all.length)html+='<p>No invoices are available for your account yet.</p>';
   for(const {invoice:i} of all){
+   const invoiceIndex=all.findIndex(x=>x.invoice===i);
    const {subtotal,total,paid,balance}=clientInvoiceFigures(i);
-   html+='<article class="client-invoice"><div class="actions" style="justify-content:space-between;align-items:center"><h2>Invoice '+esc(i.invoice_number)+'</h2><span class="pill">'+esc(i.status)+'</span></div>'+
+   html+='<article class="client-invoice" data-client-invoice-card="'+invoiceIndex+'"><div class="actions" style="justify-content:space-between;align-items:center"><h2>Invoice '+esc(i.invoice_number)+'</h2><span class="pill">'+esc(i.status)+'</span></div>'+
     '<p class="muted">Issued '+fmt(i.issue_date)+' · Due '+fmt(i.due_date)+'</p>'+
     (i.items||[]).map(x=>'<div class="item"><div><strong>'+esc(x.description)+'</strong><p class="muted">'+esc(x.item_category||'Catering item')+'</p></div><span>'+esc(x.quantity)+' × '+money(x.unit_price)+'</span></div>').join('')+
     '<div class="right"><p>Subtotal: '+money(subtotal)+' · Tax: '+money(i.tax_amount)+' · Discount: '+money(i.discount_amount)+'</p>'+
-    '<p>Total: '+money(total)+' · Paid: '+money(paid)+'</p><h2>Balance due '+money(balance)+'</h2></div></article>';
+    '<p>Total: '+money(total)+' · Paid: '+money(paid)+'</p><h2>Balance due '+money(balance)+'</h2></div>'+ 
+    '<div class="actions" style="margin-top:12px"><button type="button" class="btn alt" data-client-print="'+invoiceIndex+'">Print / Save PDF</button></div></article>';
   }
   html+='</section>';
  }
