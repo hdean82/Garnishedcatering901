@@ -15,16 +15,13 @@ Deno.serve(async req=>{
  let input;try{input=await req.json()}catch{return reply({error:"Invalid request"},400)}
  const code=String(input.invitation_code||"");
  if(!/^[0-9a-f-]{36}$/i.test(code))return reply({error:"Invalid invitation code"},400);
- const {data:invite,error:inviteError}=await db.from("garnished_client_invites").select("id,business_id,customer_id,recipient_email,expires_at,claimed_by,claimed_at").eq("code",code).maybeSingle();
- if(inviteError||!invite)return reply({error:"Client invitation not found"},404);
- if(invite.claimed_at)return reply({error:"Invitation has already been used"},409);
- if(new Date(invite.expires_at)<=new Date())return reply({error:"Invitation expired"},410);
- if(String(invite.recipient_email).toLowerCase()!==user.email.toLowerCase())return reply({error:"Use the email address that received the invitation"},403);
- const {data:customer}=await db.from("customers").select("id").eq("id",invite.customer_id).eq("business_id",invite.business_id).maybeSingle();
- if(!customer)return reply({error:"Customer record unavailable"},404);
- const {error:accessError}=await db.from("garnished_client_access").upsert({business_id:invite.business_id,customer_id:invite.customer_id,user_id:user.id},{onConflict:"business_id,customer_id,user_id",ignoreDuplicates:true});
- if(accessError)return reply({error:"Unable to activate client access"},500);
- const {error:doneError}=await db.from("garnished_client_invites").update({claimed_by:user.id,claimed_at:new Date().toISOString()}).eq("id",invite.id).is("claimed_at",null);
- if(doneError)return reply({error:"Client access created; refresh your account to continue"},500);
+ const {data:claimed,error:claimError}=await db.rpc("claim_garnished_client_invite_service",{p_invitation_code:code,p_claimant_id:user.id});
+ if(claimError){
+  const message=String(claimError.message||"");
+  if(/email address|verification/i.test(message))return reply({error:"Sign in with the verified invited email"},403);
+  if(/expired|invalid|already accepted/i.test(message))return reply({error:"Invitation expired, invalid, or already used"},410);
+  return reply({error:"Unable to accept invitation"},422);
+ }
+ if(!claimed)return reply({error:"Unable to activate client account"},500);
  return reply({accepted:true});
 });
