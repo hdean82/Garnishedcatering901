@@ -750,10 +750,18 @@ function clientInvoiceFigures(invoice){
 async function loadClientPortal(){
  if(!CLIENT_MODE||!session?.access_token)return;
  try{
-  const res=await fetch(URL+'/functions/v1/garnished-client-portal-data',{method:'POST',headers:authHeader(),body:'{}'});
+  const fetchPortal=()=>fetch(URL+'/functions/v1/garnished-client-portal-data',{method:'POST',headers:authHeader(),body:'{}'});
+  let res=await fetchPortal();
+  if(res.status===401&&session?.refresh_token){
+   if(await refreshSession())res=await fetchPortal();
+   else{
+    session=null;safeStore.removeItem('garnished_session');clientPortalAccounts=[];showAuth();
+    throw Error('Your session expired. Sign in again to view your account.');
+   }
+  }
   const result=await res.json().catch(()=>({}));
   if(!res.ok)throw Error(result.error||'Unable to load client invoices');
-  clientPortalAccounts=result.accounts||[];
+  clientPortalAccounts=Array.isArray(result.accounts)?result.accounts:[];
   renderClientPortal();
  }catch(err){
   $('content').innerHTML='<div class="panel"><h2>My account</h2><p>'+esc(err.message)+'</p><button class="btn alt" id="portalTryAgain">Try again</button></div>';
