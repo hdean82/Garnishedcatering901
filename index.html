@@ -72,7 +72,7 @@ if(!b.length){
  '<p class="small">Only invited team members can see internal business information.</p></div>';
  $('joinWorkspace').onclick=()=>joinWorkspace();return;
 }
-businessId=b[0].id;activeBusiness=b[0];state=emptyState();
+businessId=b[0].id;activeBusiness=b[0];state=emptyState();$('nav').style.display='';
 await Promise.all(tables.map(async t=>{const sort=t==='invoice_items'?'position.asc':t==='payments'?'paid_at.desc':'created_at.desc';state[t]=await req('/rest/v1/'+t+'?select=*&'+(t==='businesses'?'id':'business_id')+'=eq.'+encodeURIComponent(businessId)+'&order='+sort)}));
 state.business_invites=await req('/rest/v1/business_invites?select=*&business_id=eq.'+businessId+'&order=created_at.desc').catch(()=>[]);state.garnished_client_invites=await req('/rest/v1/garnished_client_invites?select=*&business_id=eq.'+businessId+'&order=created_at.desc').catch(()=>[]);
 if(activeBusiness?.accent_color&&/^#[0-9a-f]{6}$/i.test(activeBusiness.accent_color))document.documentElement.style.setProperty('--brand-accent',activeBusiness.accent_color);
