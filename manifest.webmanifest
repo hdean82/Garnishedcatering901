@@ -1,0 +1,19 @@
+{
+  "name": "Garnished Catering Manager",
+  "short_name": "Garnished",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f7f3",
+  "theme_color": "#315a40",
+  "description": "Garnished Catering events, invoices, prep, calendar and team workspace",
+  "icons": [
+    {
+      "src": "/assets/garnished-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
