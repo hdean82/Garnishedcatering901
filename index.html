@@ -233,6 +233,7 @@ if(!b.length){
 }
 businessId=b[0].id;activeBusiness=b[0];state=emptyState();$('nav').style.display='';
 await Promise.all(tables.map(async t=>{const sort=t==='invoice_items'?'position.asc':t==='payments'?'paid_at.desc':'created_at.desc';state[t]=await req('/rest/v1/'+t+'?select=*&'+(t==='businesses'?'id':'business_id')+'=eq.'+encodeURIComponent(businessId)+'&order='+sort)}));
+state.garnished_menu_items=await req('/rest/v1/garnished_menu_items?select=*&business_id=eq.'+businessId+'&order=category.asc,name.asc').catch(()=>[]);
 state.business_invites=await req('/rest/v1/business_invites?select=*&business_id=eq.'+businessId+'&order=created_at.desc').catch(()=>[]);state.garnished_client_invites=await req('/rest/v1/garnished_client_invites?select=*&business_id=eq.'+businessId+'&order=created_at.desc').catch(()=>[]);
 if(activeBusiness?.accent_color&&/^#[0-9a-f]{6}$/i.test(activeBusiness.accent_color))document.documentElement.style.setProperty('--brand-accent',activeBusiness.accent_color);
 render()
@@ -327,7 +328,7 @@ function person(id){return state.customers.find(x=>x.id===id)?.name||'Unassigned
  if(select)select.onchange=()=>{view=select.value;render()};
  document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>{view=button.dataset.view;render()});
 }
-function render(){nav();const pages={dashboard:dashboard,events:()=>recordList('events'),planner:planner,tasks:()=>recordList('tasks'),messages:messagePage,customers:()=>recordList('customers'),invoices:invoiceList,shopping_items:shoppingPage,settings:settingsPage,account:studioAccountPage,team:teamPage};$('content').innerHTML=(pages[view]||dashboard)();if($('emailInviteForm'))$('emailInviteForm').onsubmit=createInvite;if($('clientInviteForm'))$('clientInviteForm').onsubmit=createClientInvite;if($('bulkShopping'))$('bulkShopping').onclick=openBatchShopping;if($('settingsForm'))$('settingsForm').onsubmit=saveBusinessSettings;if($('reminderDigestForm'))$('reminderDigestForm').onsubmit=saveReminderDigestPreferences;if($('accountProfileForm'))wirePersonalAccountSettings();if($('homeInstall'))$('homeInstall').onclick=showInstallInstructions;if($('refreshReminderCenter'))$('refreshReminderCenter').onclick=async()=>{await load()};document.querySelectorAll('[data-reminder-done]').forEach(b=>b.onclick=()=>{if(confirm('Mark this task complete?'))update('tasks',b.dataset.reminderDone,{status:'done',completed_at:now()}).catch(err=>toast(err.message))});document.querySelectorAll('[data-reminder-invoice]').forEach(b=>b.onclick=()=>openInvoice(b.dataset.reminderInvoice));document.querySelectorAll('[data-cal-date]').forEach(b=>b.onclick=()=>{selectedCalendarDate=b.dataset.calDate;calendarCursor=new Date(selectedCalendarDate+'T12:00:00');view='planner';plannerMode='calendar';render()});document.querySelectorAll('[data-planner-mode]').forEach(b=>b.onclick=()=>{plannerMode=b.dataset.plannerMode;render()});document.querySelectorAll('[data-cal-step]').forEach(b=>b.onclick=()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+Number(b.dataset.calStep),1);selectedCalendarDate='';render()});document.querySelectorAll('[data-cal-event]').forEach(b=>b.onclick=()=>openPlanner(b.dataset.calEvent));if($('importInvoices'))$('importInvoices').onclick=openInvoiceImport;if($('importPdfInvoice'))$('importPdfInvoice').onclick=openPdfInvoiceImport;if($('invoiceSearch'))$('invoiceSearch').oninput=filterInvoicesInPlace;if($('invoiceStatusFilter'))$('invoiceStatusFilter').onchange=filterInvoicesInPlace;if($('refreshMessages'))$('refreshMessages').onclick=async()=>{await load();view='messages';render()};if($('newConversation'))$('newConversation').onclick=newConversation;if($('startFirstConversation'))$('startFirstConversation').onclick=newConversation;document.querySelectorAll('[data-thread]').forEach(b=>b.onclick=()=>{const id=b.dataset.thread;const t=(state.messages||[]).find(m=>m.id===id);const u=new URL(location.href);u.searchParams.set('thread',id);history.replaceState(null,'',u.pathname+u.search);render()});if($('sendMessageForm'))$('sendMessageForm').onsubmit=sendMessage;document.querySelectorAll('[data-reply]').forEach(b=>b.onclick=()=>{const target=$('messageReplyTo');if(target){target.value=b.dataset.reply;$('messageBody').focus();$('replyHint').textContent='Replying in this conversation';}});document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.copy);toast('Invite code copied')}catch{toast('Select and copy the code manually')}});document.querySelectorAll('[data-customer-edit]').forEach(b=>b.onclick=()=>editCustomer(b.dataset.customerEdit));document.querySelectorAll('[data-new]').forEach(n=>n.onclick=()=>newRecord(n.dataset.new));document.querySelectorAll('[data-quick-new]').forEach(b=>b.onclick=()=>newRecord(b.dataset.quickNew));document.querySelectorAll('[data-quick-shopping]').forEach(b=>b.onclick=openBatchShopping);document.querySelectorAll('[data-quick-draft]').forEach(b=>b.onclick=()=>openInvoice(b.dataset.quickDraft));document.querySelectorAll('[data-done]').forEach(n=>n.onclick=()=>update(n.dataset.done,n.dataset.id,{[n.dataset.done==='shopping_items'?'purchased':'status']:n.dataset.done==='shopping_items'?n.dataset.current!=='true':'done',...(n.dataset.done==='tasks'?{completed_at:now()}:{})}).catch(e=>toast(e.message)));document.querySelectorAll('[data-remove]').forEach(n=>n.onclick=()=>remove(n.dataset.remove,n.dataset.id).catch(e=>toast(e.message)));document.querySelectorAll('[data-plan]').forEach(n=>n.onclick=()=>openPlanner(n.dataset.plan));document.querySelectorAll('[data-beo]').forEach(n=>n.onclick=()=>openEventCommandSheet(n.dataset.beo));document.querySelectorAll('[data-generate]').forEach(n=>n.onclick=()=>generatePrep(n.dataset.generate));document.querySelectorAll('[data-openinvoice]').forEach(n=>n.onclick=()=>openInvoice(n.dataset.openinvoice));document.querySelectorAll('[data-pay]').forEach(n=>n.onclick=()=>recordPayment(n.dataset.pay));}
+function render(){nav();const pages={dashboard:dashboard,events:()=>recordList('events'),planner:planner,tasks:()=>recordList('tasks'),messages:messagePage,customers:()=>recordList('customers'),invoices:invoiceList,shopping_items:shoppingPage,settings:settingsPage,account:studioAccountPage,team:teamPage};$('content').innerHTML=(pages[view]||dashboard)();if($('emailInviteForm'))$('emailInviteForm').onsubmit=createInvite;if($('clientInviteForm'))$('clientInviteForm').onsubmit=createClientInvite;if($('bulkShopping'))$('bulkShopping').onclick=openBatchShopping;if($('settingsForm'))$('settingsForm').onsubmit=saveBusinessSettings;if($('menuCatalogForm'))$('menuCatalogForm').onsubmit=saveMenuCatalogItem;document.querySelectorAll('[data-menu-edit]').forEach(b=>b.onclick=()=>editMenuCatalogItem(b.dataset.menuEdit));document.querySelectorAll('[data-menu-archive]').forEach(b=>b.onclick=()=>toggleMenuCatalogItem(b.dataset.menuArchive));if($('reminderDigestForm'))$('reminderDigestForm').onsubmit=saveReminderDigestPreferences;if($('accountProfileForm'))wirePersonalAccountSettings();if($('homeInstall'))$('homeInstall').onclick=showInstallInstructions;if($('refreshReminderCenter'))$('refreshReminderCenter').onclick=async()=>{await load()};document.querySelectorAll('[data-reminder-done]').forEach(b=>b.onclick=()=>{if(confirm('Mark this task complete?'))update('tasks',b.dataset.reminderDone,{status:'done',completed_at:now()}).catch(err=>toast(err.message))});document.querySelectorAll('[data-reminder-invoice]').forEach(b=>b.onclick=()=>openInvoice(b.dataset.reminderInvoice));document.querySelectorAll('[data-cal-date]').forEach(b=>b.onclick=()=>{selectedCalendarDate=b.dataset.calDate;calendarCursor=new Date(selectedCalendarDate+'T12:00:00');view='planner';plannerMode='calendar';render()});document.querySelectorAll('[data-planner-mode]').forEach(b=>b.onclick=()=>{plannerMode=b.dataset.plannerMode;render()});document.querySelectorAll('[data-cal-step]').forEach(b=>b.onclick=()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+Number(b.dataset.calStep),1);selectedCalendarDate='';render()});document.querySelectorAll('[data-cal-event]').forEach(b=>b.onclick=()=>openPlanner(b.dataset.calEvent));if($('importInvoices'))$('importInvoices').onclick=openInvoiceImport;if($('importPdfInvoice'))$('importPdfInvoice').onclick=openPdfInvoiceImport;if($('invoiceSearch'))$('invoiceSearch').oninput=filterInvoicesInPlace;if($('invoiceStatusFilter'))$('invoiceStatusFilter').onchange=filterInvoicesInPlace;if($('refreshMessages'))$('refreshMessages').onclick=async()=>{await load();view='messages';render()};if($('newConversation'))$('newConversation').onclick=newConversation;if($('startFirstConversation'))$('startFirstConversation').onclick=newConversation;document.querySelectorAll('[data-thread]').forEach(b=>b.onclick=()=>{const id=b.dataset.thread;const t=(state.messages||[]).find(m=>m.id===id);const u=new URL(location.href);u.searchParams.set('thread',id);history.replaceState(null,'',u.pathname+u.search);render()});if($('sendMessageForm'))$('sendMessageForm').onsubmit=sendMessage;document.querySelectorAll('[data-reply]').forEach(b=>b.onclick=()=>{const target=$('messageReplyTo');if(target){target.value=b.dataset.reply;$('messageBody').focus();$('replyHint').textContent='Replying in this conversation';}});document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.copy);toast('Invite code copied')}catch{toast('Select and copy the code manually')}});document.querySelectorAll('[data-customer-edit]').forEach(b=>b.onclick=()=>editCustomer(b.dataset.customerEdit));document.querySelectorAll('[data-new]').forEach(n=>n.onclick=()=>newRecord(n.dataset.new));document.querySelectorAll('[data-quick-new]').forEach(b=>b.onclick=()=>newRecord(b.dataset.quickNew));document.querySelectorAll('[data-quick-shopping]').forEach(b=>b.onclick=openBatchShopping);document.querySelectorAll('[data-quick-draft]').forEach(b=>b.onclick=()=>openInvoice(b.dataset.quickDraft));document.querySelectorAll('[data-done]').forEach(n=>n.onclick=()=>update(n.dataset.done,n.dataset.id,{[n.dataset.done==='shopping_items'?'purchased':'status']:n.dataset.done==='shopping_items'?n.dataset.current!=='true':'done',...(n.dataset.done==='tasks'?{completed_at:now()}:{})}).catch(e=>toast(e.message)));document.querySelectorAll('[data-remove]').forEach(n=>n.onclick=()=>remove(n.dataset.remove,n.dataset.id).catch(e=>toast(e.message)));document.querySelectorAll('[data-plan]').forEach(n=>n.onclick=()=>openPlanner(n.dataset.plan));document.querySelectorAll('[data-beo]').forEach(n=>n.onclick=()=>openEventCommandSheet(n.dataset.beo));document.querySelectorAll('[data-generate]').forEach(n=>n.onclick=()=>generatePrep(n.dataset.generate));document.querySelectorAll('[data-openinvoice]').forEach(n=>n.onclick=()=>openInvoice(n.dataset.openinvoice));document.querySelectorAll('[data-pay]').forEach(n=>n.onclick=()=>recordPayment(n.dataset.pay));}
 function header(t,sub,button){return `<div class="actions" style="justify-content:space-between;align-items:end"><div><h1>${t}</h1><p>${sub}</p></div>${button?`<button class="btn" data-new="${button}">+ Add ${button==='shopping_items'?'item':button.slice(0,-1)}</button>`:''}</div>`}
 
 function reminderCenter(){
@@ -603,6 +604,69 @@ function wirePersonalAccountSettings(){
   finally{btn.disabled=false}
  };
 }
+function activeMenuItems(){return (state.garnished_menu_items||[]).filter(x=>x.active!==false)}
+function menuCatalogSelect(id='menuCatalogPick'){
+ const list=activeMenuItems();
+ return '<label for="'+esc(id)+'">Choose a saved food or service</label><select id="'+esc(id)+'"><option value="">Custom line item (type below)</option>'+
+ list.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.category+' · '+x.name+' — '+money(x.unit_price)+' / '+x.unit_label)+'</option>').join('')+'</select>';
+}
+function menuCatalogPanel(){
+ const entries=state.garnished_menu_items||[];
+ const mayEdit=activeBusiness?.owner_id===session?.user?.id||(state.business_members||[]).some(m=>m.user_id===session?.user?.id&&m.role==='manager');
+ const categoryOptions=invoiceCategoryOptions().map(([id,label])=>'<option value="'+esc(id)+'">'+esc(label)+'</option>').join('');
+ return '<section class="panel" id="foodPriceCatalog"><h2>Food & Pricing Catalog</h2>'+
+ '<p class="small">Save the foods, packages, and service prices you sell. Choose these items on an invoice to fill in the description and current price. Editing the catalog never changes existing invoices.</p>'+
+ (mayEdit?'<form id="menuCatalogForm"><div class="formgrid">'+
+ '<div class="full"><label for="catalogName">Food / service name</label><input id="catalogName" maxlength="180" required placeholder="e.g. Family Feast, 1 pan mac & cheese"></div>'+
+ '<div><label for="catalogCategory">Category</label><select id="catalogCategory">'+categoryOptions+'</select></div>'+
+ '<div><label for="catalogUnit">Sold by</label><select id="catalogUnit"><option value="each">Each</option><option value="pan">Pan</option><option value="dozen">Dozen</option><option value="person">Per person</option><option value="tray">Tray</option><option value="package">Package</option><option value="hour">Hour</option><option value="delivery">Delivery</option></select></div>'+
+ '<div><label for="catalogPrice">Selling price ($)</label><input id="catalogPrice" required type="number" min="0" max="10000000" step="0.01" value="0"></div>'+
+ '<div class="full"><label for="catalogDetails">Optional description</label><textarea id="catalogDetails" maxlength="600" rows="2"></textarea></div></div>'+
+ '<button class="btn" type="submit">Save catalog item</button></form>':'')+
+ '<h2 style="margin-top:22px">Saved items ('+entries.length+')</h2>'+
+ (entries.length?entries.map(x=>'<div class="item"><div><strong>'+esc(x.name)+'</strong><div class="muted">'+esc(x.category)+' · '+money(x.unit_price)+' / '+esc(x.unit_label)+(x.active===false?' · Archived':'')+'</div>'+(x.description?'<div class="small">'+esc(x.description)+'</div>':'')+'</div>'+
+ (mayEdit?'<div class="actions"><button class="btn alt" type="button" data-menu-edit="'+esc(x.id)+'">Edit</button><button class="btn alt" type="button" data-menu-archive="'+esc(x.id)+'">'+(x.active===false?'Restore':'Archive')+'</button></div>':'')+'</div>').join(''):'<p class="small">No saved foods yet. Add your menu and prices above.</p>')+
+ '</section>';
+}
+async function saveMenuCatalogItem(e){
+ e.preventDefault();
+ const obj={business_id:businessId,name:$('catalogName').value.trim(),category:$('catalogCategory').value,unit_label:$('catalogUnit').value,unit_price:Number($('catalogPrice').value),description:$('catalogDetails').value.trim()||null};
+ if(!obj.name||obj.name.length>180||!Number.isFinite(obj.unit_price)||obj.unit_price<0||obj.unit_price>10000000)return toast('Enter a food name and valid price');
+ const btn=e.target.querySelector('button[type="submit"]');btn.disabled=true;
+ try{await req('/rest/v1/garnished_menu_items','POST',obj);await load();toast('Food and selling price saved')}catch(err){toast('Could not save food: '+err.message);btn.disabled=false}
+}
+function editMenuCatalogItem(id){
+ const obj=(state.garnished_menu_items||[]).find(x=>x.id===id);if(!obj)return;
+ openModal('Edit catalog food', '<form id="catalogEditForm">'+
+ '<label for="editMenuName">Name</label><input id="editMenuName" maxlength="180" required value="'+esc(obj.name)+'">'+
+ '<label for="editMenuCategory">Category</label><select id="editMenuCategory">'+invoiceCategoryOptions().map(([v,n])=>'<option value="'+esc(v)+'"'+(v===obj.category?' selected':'')+'>'+esc(n)+'</option>').join('')+'</select>'+
+ '<label for="editMenuUnit">Sold by</label><input id="editMenuUnit" maxlength="40" required value="'+esc(obj.unit_label)+'">'+
+ '<label for="editMenuPrice">Price ($)</label><input id="editMenuPrice" type="number" min="0" max="10000000" step="0.01" required value="'+esc(obj.unit_price)+'">'+
+ '<label for="editMenuDescription">Description</label><textarea id="editMenuDescription" maxlength="600">'+esc(obj.description||'')+'</textarea>'+
+ '<div class="actions"><button class="btn" type="submit">Save changes</button><button class="btn alt" type="button" id="cancelCatalogEdit">Cancel</button></div></form>');
+ $('cancelCatalogEdit').onclick=closeModal;
+ $('catalogEditForm').onsubmit=async e=>{
+  e.preventDefault();
+  const patch={name:$('editMenuName').value.trim(),category:$('editMenuCategory').value,unit_label:$('editMenuUnit').value.trim(),unit_price:Number($('editMenuPrice').value),description:$('editMenuDescription').value.trim()||null};
+  if(!patch.name||!patch.unit_label||!Number.isFinite(patch.unit_price)||patch.unit_price<0||patch.unit_price>10000000)return toast('Enter valid food details and price');
+  const btn=e.target.querySelector('button[type="submit"]');btn.disabled=true;
+  try{await req('/rest/v1/garnished_menu_items?id=eq.'+encodeURIComponent(id)+'&business_id=eq.'+encodeURIComponent(businessId),'PATCH',patch);closeModal();await load();toast('Catalog price updated; existing invoices unchanged')}catch(err){toast(err.message);btn.disabled=false}
+ };
+}
+async function toggleMenuCatalogItem(id){
+ const obj=(state.garnished_menu_items||[]).find(x=>x.id===id);if(!obj)return;
+ if(!confirm((obj.active===false?'Restore':'Archive')+' '+obj.name+'? Existing invoices will not change.'))return;
+ try{await req('/rest/v1/garnished_menu_items?id=eq.'+encodeURIComponent(id)+'&business_id=eq.'+encodeURIComponent(businessId),'PATCH',{active:obj.active===false});await load();toast('Catalog updated')}catch(err){toast(err.message)}
+}
+function applyCatalogSelection(select,row){
+ const id=select.value,item=activeMenuItems().find(x=>x.id===id);if(!item||!row)return;
+ const description=row.querySelector('.inv-description'),category=row.querySelector('.inv-category'),price=row.querySelector('.inv-price');
+ if(description)description.value=item.name+(item.unit_label!=='each'?' ('+item.unit_label+')':'');
+ if(category){const exists=[...category.options].some(o=>o.value===item.category);if(exists)category.value=item.category}
+ if(price)price.value=Number(item.unit_price).toFixed(2);
+ row.dispatchEvent(new Event('input',{bubbles:true}));
+}
+
 function settingsPage(){
  const b=activeBusiness||{},owner=b.owner_id===session?.user?.id;
  const keys=[
@@ -623,6 +687,7 @@ function settingsPage(){
  else html+='<div><label for="setting_'+key+'">'+label+'</label><input type="'+type+'" id="setting_'+key+'" value="'+esc(value)+'" '+(owner?'':'disabled')+'></div>';
  }
  html+='</div>'+(owner?'<button class="btn" type="submit" style="margin-top:14px">Save business settings</button>':'')+'</form></div>'+
+ menuCatalogPanel()+
  '<div class="panel"><h2>Daily email reminders</h2><p class="small">Owner-only internal digest of due tasks and open invoice records. No emails go to clients. Delivery is not yet activated until the scheduler and private credentials are configured.</p>'+
  '<form id="reminderDigestForm">'+
  '<label for="reminderDigestEmail">Internal recipient email</label><input id="reminderDigestEmail" type="email" maxlength="254" autocomplete="off" value="'+esc(b.reminder_digest_email||'')+'" '+(owner?'':'disabled')+' placeholder="team@example.com">'+
@@ -1049,6 +1114,7 @@ function wireInvoiceQuickCustomer(){
 function invoiceEntryRow(category='Entree'){
  const categories=invoiceCategoryOptions().map(([value,name])=>'<option value="'+esc(value)+'">'+esc(name)+'</option>').join('');
  return '<div class="invoice-entry-row" style="border:1px solid #dce6dd;border-radius:12px;padding:10px;margin-bottom:9px;background:#fafcf9">'+
+ '<div style="margin-bottom:8px">'+menuCatalogSelect('invoiceMenuPick')+'</div>'+
  '<div class="invoice-food-grid"><div><label>Category</label><select class="inv-category">'+categories.replace('value="'+esc(category)+'"','value="'+esc(category)+'" selected')+'</select></div>'+
  '<div class="inv-food-name"><label>Food / service item</label><input class="inv-description" type="text" placeholder="e.g. Chicken alfredo" maxlength="500"></div>'+
  '<div><label>Qty</label><input class="inv-qty" type="number" min="0.001" step="any" value="1" inputmode="decimal"></div>'+
@@ -1082,6 +1148,7 @@ function wireInvoiceEntries(){
  $('addInvoiceFood').onclick=()=>addOne();
  document.querySelectorAll('[data-invoice-shortcut]').forEach(btn=>btn.onclick=()=>addOne(btn.dataset.invoiceShortcut));
  holder.addEventListener('input',recalc);
+ holder.addEventListener('change',e=>{if(e.target.id==='invoiceMenuPick')applyCatalogSelection(e.target,e.target.closest('.invoice-entry-row'))});
  holder.addEventListener('click',e=>{if(!e.target.closest('.inv-remove'))return;e.target.closest('.invoice-entry-row').remove();recalc()});
  for(const id of ['f_tax_amount','f_discount_amount'])$(id)?.addEventListener('input',recalc);
  addOne('Entree',false);
@@ -1238,11 +1305,12 @@ function editInvoiceLine(invoiceId,lineId){
  const clientVisible=['sent','partial','paid','overdue'].includes(invoice?.status);
  openModal(item?'Edit line item':'Add line item',
   (clientVisible?'<div class="notice">This invoice is visible to the client. Changes to items or prices will immediately update their invoice.</div>':'')+
-  '<form id="lineForm">'+choose('Item category','item_category',invoiceCategoryOptions())+field('Item or service','description','text',true)+
+  '<form id="lineForm">'+(item?'':menuCatalogSelect('singleInvoiceMenuPick'))+choose('Item category','item_category',invoiceCategoryOptions())+field('Item or service','description','text',true)+
   field('Quantity','quantity','number',true)+field('Price per unit ($)','unit_price','number',true)+
   '<div class="actions" style="margin-top:15px"><button class="btn" type="submit">'+(item?'Save item':'Add item')+'</button>'+
   (item?'<button class="btn alt" type="button" id="deleteLine">Remove item</button>':'')+
   '<button class="btn alt" type="button" id="cancelLine">Cancel</button></div></form>');
+ if($('singleInvoiceMenuPick'))$('singleInvoiceMenuPick').onchange=()=>{const selected=activeMenuItems().find(x=>x.id===$('singleInvoiceMenuPick').value);if(!selected)return;$('f_description').value=selected.name+(selected.unit_label!=='each'?' ('+selected.unit_label+')':'');$('f_item_category').value=selected.category;$('f_unit_price').value=selected.unit_price;};
  $('f_description').value=item?.description||'';
  $('f_item_category').value=item?.item_category||'Other';
  $('f_quantity').value=String(item?.quantity??1);
