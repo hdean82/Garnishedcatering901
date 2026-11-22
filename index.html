@@ -810,7 +810,7 @@ function openPdfInvoiceImport(){
   const progress=$('garnishedPdfProgress'),review=$('garnishedPdfReview');
   review.replaceChildren();progress.textContent='Preparing PDF…';
   try{
-   const mod=await import('/assets/garnished-invoice-pdf.mjs');
+   const mod=await import('/assets/garnished-invoice-pdf.mjs?v=2');
    const parsed=await mod.readGarnishedInvoicePdf(file,{progress:s=>{if(progress)progress.textContent=s}});
    if(!$('garnishedPdfReview'))return; // dialog was closed
    const suggested=mod.suggestInvoiceFields(parsed.text);
