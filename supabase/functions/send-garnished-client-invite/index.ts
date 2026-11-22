@@ -21,6 +21,9 @@ Deno.serve(async req=>{
  if(!customer)return reply({error:"Customer not found"},404);
  const email=String(customer.email||"").trim().toLowerCase();
  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return reply({error:"Add a valid customer email in their profile first"},400);
+ const {data:pending,error:pendingError}=await db.from("garnished_client_invites").select("id").eq("business_id",businessId).eq("customer_id",customerId).eq("recipient_email",email).is("claimed_at",null).gt("expires_at",new Date().toISOString()).limit(1);
+ if(pendingError)return reply({error:"Unable to check pending invitations"},500);
+ if(pending?.length)return reply({error:"A client invitation is already pending. Use the existing link in Team Access, or wait until it expires."},409);
  const cutoff=new Date(Date.now()-86400000).toISOString();
  const {count}=await db.from("garnished_client_invites").select("id",{count:"exact",head:true}).eq("business_id",businessId).gte("created_at",cutoff);
  if((count||0)>=15)return reply({error:"Daily client invitation limit reached"},429);
