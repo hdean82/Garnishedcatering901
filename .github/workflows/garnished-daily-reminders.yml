@@ -1,0 +1,34 @@
+name: Garnished internal daily reminder check
+on:
+  schedule:
+    - cron: '10 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: garnished-reminders-hourly
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      GARNISHED_REMINDER_JOB_SECRET: ${{ secrets.GARNISHED_REMINDER_JOB_SECRET }}
+    steps:
+      - name: Check reminder credential
+        id: credential
+        run: |
+          if [ -z "$GARNISHED_REMINDER_JOB_SECRET" ]; then
+            echo "Reminder schedule is disabled: private job secret has not been configured."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Run opt-in reminder check
+        if: steps.credential.outputs.configured == 'true'
+        run: |
+          curl --fail-with-body --silent --show-error --max-time 45 \
+            --request POST \
+            --header "Authorization: Bearer $GARNISHED_REMINDER_JOB_SECRET" \
+            --header "Content-Type: application/json" \
+            --data '{}' \
+            "https://vufrlkxftvpouhsqlmpb.supabase.co/functions/v1/garnished-daily-reminders"
