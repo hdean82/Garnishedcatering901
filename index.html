@@ -607,7 +607,7 @@ function wirePersonalAccountSettings(){
 function activeMenuItems(){return (state.garnished_menu_items||[]).filter(x=>x.active!==false)}
 function menuCatalogSelect(id='menuCatalogPick'){
  const list=activeMenuItems();
- return '<label for="'+esc(id)+'">Choose a saved food or service</label><select id="'+esc(id)+'"><option value="">Custom line item (type below)</option>'+
+ return '<label>Choose a saved food or service</label><select '+(id==='invoiceMenuPick'?'class="invoice-catalog-choice"':'id="'+esc(id)+'"')+' aria-label="Choose a saved food or service"><option value="">Custom line item (type below)</option>'+
  list.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.category+' · '+x.name+' — '+money(x.unit_price)+' / '+x.unit_label)+'</option>').join('')+'</select>';
 }
 function menuCatalogPanel(){
@@ -1148,7 +1148,7 @@ function wireInvoiceEntries(){
  $('addInvoiceFood').onclick=()=>addOne();
  document.querySelectorAll('[data-invoice-shortcut]').forEach(btn=>btn.onclick=()=>addOne(btn.dataset.invoiceShortcut));
  holder.addEventListener('input',recalc);
- holder.addEventListener('change',e=>{if(e.target.id==='invoiceMenuPick')applyCatalogSelection(e.target,e.target.closest('.invoice-entry-row'))});
+ holder.addEventListener('change',e=>{if(e.target.matches('.invoice-catalog-choice'))applyCatalogSelection(e.target,e.target.closest('.invoice-entry-row'))});
  holder.addEventListener('click',e=>{if(!e.target.closest('.inv-remove'))return;e.target.closest('.invoice-entry-row').remove();recalc()});
  for(const id of ['f_tax_amount','f_discount_amount'])$(id)?.addEventListener('input',recalc);
  addOne('Entree',false);
