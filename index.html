@@ -101,6 +101,9 @@ function teamPage(){
 async function createClientInvite(e){
  e.preventDefault();if(activeBusiness?.owner_id!==session?.user?.id)return toast('Only the owner may invite clients');
  const customer_id=val('client_id'),btn=$('sendClientInvite');if(!customer_id)return toast('Select a customer with an email');
+ const selectedCustomer=state.customers.find(x=>x.id===customer_id);
+ if(!selectedCustomer?.email)return toast('Add a customer email first');
+ if(!confirm('Send private client portal access to '+selectedCustomer.name+' ('+selectedCustomer.email+')? They will only see published invoices linked to their customer account.'))return;
  btn.disabled=true;btn.textContent='Sending…';
  try{
   const res=await fetch(URL+'/functions/v1/send-garnished-client-invite',{method:'POST',headers:authHeader(),body:JSON.stringify({customer_id,business_id:businessId})});
