@@ -134,6 +134,48 @@
 .nav .garnished-board-link:hover{background:#dcebd8}
 .nav .garnished-board-link:focus-visible{outline:3px solid #cba65f;outline-offset:2px}
 @media(max-width:720px){.nav .garnished-board-link{margin:0 0 0 6px;min-height:42px}}
+
+/* Dense, accessible team invoice review; does not affect customer PDF output. */
+#modal .dialog.compact-invoice-dialog{max-width:840px;padding:20px}
+.compact-invoice-dialog #modalTitle{font-size:22px;margin:0}
+.compact-invoice-preview{font-size:13px;color:#293a2f}
+.compact-invoice-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:4px 0 12px;border-bottom:1px solid #e5eae3}
+.compact-invoice-top strong{font-size:14px}
+.compact-invoice-top .small{margin-top:5px}
+.compact-invoice-top-actions{display:flex;gap:6px;flex-wrap:wrap}
+.compact-invoice-top-actions .btn,.compact-invoice-toolbar .btn{font-size:12px;padding:8px 11px;min-height:36px}
+.compact-invoice-event{font-size:12px;margin:9px 0!important}
+.compact-invoice-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 0 8px}
+.compact-invoice-section-title strong{font-size:14px}
+.compact-invoice-section-title span{font-size:11px;color:#78877a}
+.compact-invoice-table{border:1px solid #e5eae4;border-radius:12px;overflow:hidden}
+.compact-invoice-head,.compact-invoice-row{display:grid;grid-template-columns:minmax(0,1fr) 46px 80px 90px 48px;align-items:center;column-gap:9px}
+.compact-invoice-head{padding:7px 11px;background:#f2f6f0;color:#5f7465;font-size:10px;font-weight:700;letter-spacing:.02em}
+.compact-invoice-head span:nth-child(n+2),.compact-invoice-qty,.compact-invoice-price,.compact-invoice-amount{text-align:right;font-variant-numeric:tabular-nums}
+.compact-invoice-row{padding:7px 11px;border-top:1px solid #edf0eb;min-height:44px}
+.compact-invoice-name{min-width:0;display:flex;flex-direction:column;gap:2px}
+.compact-invoice-name strong{font-size:12px;line-height:1.3;overflow-wrap:anywhere;font-weight:620}
+.compact-invoice-name span{font-size:10px;color:#809083}
+.compact-invoice-edit{padding:6px!important;min-height:31px!important;font-size:11px!important}
+.compact-invoice-amount{font-size:12px}
+.compact-invoice-summary{width:min(290px,100%);margin:11px 0 11px auto;display:grid;gap:5px}
+.compact-invoice-summary>div{display:flex;justify-content:space-between;align-items:baseline;gap:15px;color:#55685a}
+.compact-invoice-summary>div:first-child strong{color:#283a2e;font-size:16px}
+.compact-invoice-summary>div.compact-invoice-due{border-top:1px solid #dce5db;padding-top:7px;font-weight:700;color:#2c4733}
+.compact-invoice-summary>div.compact-invoice-due strong{font-size:17px}
+.compact-invoice-toolbar{display:flex;gap:6px;flex-wrap:wrap;padding:12px 0 4px;border-top:1px solid #e1e8e0}
+.compact-invoice-private{font-size:11px;margin:6px 0 0!important;color:#738477}
+@media(max-width:600px){
+ #modal .dialog.compact-invoice-dialog{padding:12px}
+ .compact-invoice-head,.compact-invoice-row{grid-template-columns:minmax(0,1fr) 33px 55px 68px 39px;column-gap:4px}
+ .compact-invoice-head{padding:7px 5px;font-size:9px}
+ .compact-invoice-row{padding:7px 5px}
+ .compact-invoice-name strong{font-size:11px}
+ .compact-invoice-amount,.compact-invoice-price,.compact-invoice-qty{font-size:10px}
+ .compact-invoice-edit{font-size:10px!important;padding:4px!important}
+ .compact-invoice-top-actions{width:100%}
+ .compact-invoice-toolbar .btn{flex:1 0 auto}
+}
 </style></head><body><header><div class="brand" style="display:flex;align-items:center;gap:9px"><img src="data:image/jpeg;base64,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" alt="Garnished Catering 901 logo" style="width:50px;height:50px;object-fit:contain;border-radius:50%" onerror="this.replaceWith(document.createTextNode('GARNISH.ED'))"><div>GARNISH<span class="leaf">.</span>ED<small>catering & events</small></div></div><div class="actions"><nav class="garnished-global-nav" aria-label="Garnished destinations"><a href="/">Home</a><a href="/?client=1">Client</a><a href="/?team=1">Team</a></nav><div class="garnished-social-links garnished-header-social" aria-label="Follow Garnished Catering"><a class="garnished-social-link" href="https://www.instagram.com/garnishedcatering901/" target="_blank" rel="noopener noreferrer" aria-label="Garnished Catering on Instagram" title="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.5" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg></a><a class="garnished-social-link" href="https://www.facebook.com/garnishedcatering901" target="_blank" rel="noopener noreferrer" aria-label="Garnished Catering on Facebook" title="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="currentColor"><path d="M14.2 21v-8.2h2.8l.45-3.3h-3.25V7.4c0-.96.27-1.62 1.64-1.62h1.74V2.82c-.3-.04-1.33-.13-2.53-.13-2.5 0-4.2 1.52-4.2 4.32V9.5H8v3.3h2.85V21z"/></svg></a></div><span id="modeBadge">Garnished Catering</span><button class="btn alt hide" id="signout">Sign out</button></div></header>
 <div id="publicLanding" class="garnished-public" style="display:none">
  <div class="garnished-hero-wrap">
@@ -1038,7 +1080,7 @@ function filterInvoicesInPlace(){
  });
  if($('invoiceSearchEmpty'))$('invoiceSearchEmpty').hidden=shown>0||state.invoices.length===0;
 }
-function openModal(title,body){$('modalTitle').textContent=title;$('modalBody').innerHTML=body;$('modal').classList.add('open')}function closeModal(){$('modal').classList.remove('open')}window.closeModal=closeModal;
+function openModal(title,body){document.querySelector('#modal .dialog')?.classList.remove('compact-invoice-dialog');$('modalTitle').textContent=title;$('modalBody').innerHTML=body;$('modal').classList.add('open')}function closeModal(){$('modal').classList.remove('open')}window.closeModal=closeModal;
 function field(label,id,type='text',required=false){return `<div><label for="f_${id}">${label}</label><input ${required?'required':''} id="f_${id}" type="${type}" ${type==='date'||type==='datetime-local'?'style="width:100%;min-height:44px;max-width:100%;font-size:16px;color-scheme:light"':''}></div>`}function area(label,id){return `<div class="full"><label>${label}</label><textarea id="f_${id}"></textarea></div>`}function choose(label,id,items){return `<div><label>${label}</label><select id="f_${id}">${items.map(([val,name])=>`<option value="${esc(val)}">${esc(name)}</option>`).join('')}</select></div>`}function optionalCustomers(){return [['','None'],...state.customers.map(x=>[x.id,x.name])]}function optionalEvents(){return [['','None'],...state.events.map(x=>[x.id,x.title])]}function val(id){return $('f_'+id)?.value||''}function opt(v){return v||null}function datetime(v){return v?new Date(v).toISOString():null}
 
 
@@ -1177,18 +1219,40 @@ function newRecord(t){let forms={customers:field('Customer name','name','text',t
 }catch(err){toast('Unable to save: '+err.message)}}}
 function openInvoice(id){
  const i=state.invoices.find(x=>x.id===id);if(!i)return;
- const items=state.invoice_items.filter(x=>x.invoice_id===id);
+ const items=state.invoice_items.filter(x=>x.invoice_id===id).sort((a,b)=>Number(a.position||0)-Number(b.position||0));
  const ev=state.events.find(x=>x.id===i.event_id);
+ const total=invoiceTotal(id),paid=invoicePaid(id),balance=Math.max(0,total-paid);
+ const categories=items.reduce((acc,x)=>{const k=x.item_category||'Other';if(!acc.includes(k))acc.push(k);return acc},[]);
+ const rows=items.map(x=>'<div class="compact-invoice-row" role="row">'+
+  '<div class="compact-invoice-name" role="cell"><strong>'+esc(x.description)+'</strong><span>'+esc(x.item_category||'Other')+'</span></div>'+
+  '<span class="compact-invoice-qty" role="cell">'+esc(Number(x.quantity))+'</span>'+
+  '<span class="compact-invoice-price" role="cell">'+money(x.unit_price)+'</span>'+
+  '<strong class="compact-invoice-amount" role="cell">'+money(Number(x.quantity)*Number(x.unit_price))+'</strong>'+
+  '<button class="btn alt compact-invoice-edit" type="button" data-editline="'+esc(x.id)+'" aria-label="Edit '+esc(x.description)+'">Edit</button></div>').join('');
  openModal('Invoice '+i.invoice_number,
-  '<div class="actions" style="justify-content:space-between;align-items:center"><div><span class="pill">'+esc(i.status)+'</span> <strong>'+esc(person(i.customer_id))+'</strong></div><div class="actions">'+(i.customer_id?'<button class="btn alt" id="invoiceCustomerProfile">Customer profile</button>':'')+'<button class="btn alt" id="editInvoice">Edit invoice</button></div></div>'+
-  (ev?'<p class="small">Event: '+esc(ev.title)+' · '+fmt(ev.event_at)+' · '+esc(ev.venue||'Venue TBD')+' · '+esc(ev.guest_count??'—')+' guests</p>':'')+
-  '<div id="invoiceItems">'+(items.map(x=>'<div class="item"><div><strong>'+esc(x.description)+'</strong><div class="muted">'+esc(x.item_category||'Catering item')+'</div><div class="muted">'+Number(x.quantity)+' × '+money(x.unit_price)+' = '+money(Number(x.quantity)*Number(x.unit_price))+'</div></div><button class="btn alt" data-editline="'+esc(x.id)+'">Edit</button></div>').join('')||'<div class="empty">No line items yet</div>')+'</div>'+
-  '<div class="right"><h2>Total '+money(invoiceTotal(id))+'</h2><p>Paid '+money(invoicePaid(id))+' · Balance '+money(invoiceTotal(id)-invoicePaid(id))+'</p><p>Deposit requested '+money(i.deposit_required)+'</p></div>'+
-  '<div class="actions"><button class="btn" id="addLine">+ Add one item</button><button class="btn alt" id="addManyLines">+ Add several</button><button class="btn alt" id="addPayment">Record payment</button><button class="btn alt" id="printInvoice">Preview / PDF</button>'+
-  (i.status==='draft'?'<button class="btn" type="button" id="publishClientInvoice">Make visible to client</button>':'')+
-  '<button class="btn alt" id="closeInvoice">Close</button></div>'+
-  (i.status==='draft'?'<p class="small">Draft invoices remain private. Making an invoice visible does not send an email; the linked customer must have portal access.</p>':'')
- );
+  '<div class="compact-invoice-preview">'+
+  '<div class="compact-invoice-top"><div><span class="pill">'+esc(i.status)+'</span> <strong>'+esc(person(i.customer_id))+'</strong>'+
+  '<div class="small">Issued '+fmt(i.issue_date)+' · Due '+fmt(i.due_date)+'</div></div>'+
+  '<div class="compact-invoice-top-actions">'+(i.customer_id?'<button class="btn alt" id="invoiceCustomerProfile" type="button">Customer profile</button>':'')+
+  '<button class="btn alt" id="editInvoice" type="button">Invoice details</button></div></div>'+
+  (ev?'<p class="compact-invoice-event">Event: '+esc(ev.title)+' · '+fmt(ev.event_at)+'</p>':'')+
+  '<div class="compact-invoice-section-title"><strong>Food & services</strong><span>'+items.length+' items · '+categories.length+' categories</span></div>'+
+  '<div class="compact-invoice-table" role="table" aria-label="Invoice line items">'+
+  '<div class="compact-invoice-head" role="row"><span>Item</span><span>Qty</span><span>Unit</span><span>Line total</span><span></span></div>'+
+  (rows||'<p class="empty">No line items yet</p>')+'</div>'+
+  '<div class="compact-invoice-summary"><div><span>Total</span><strong>'+money(total)+'</strong></div>'+
+  '<div><span>Paid</span><span>'+money(paid)+'</span></div>'+
+  '<div class="compact-invoice-due"><span>Balance due</span><strong>'+money(balance)+'</strong></div>'+
+  (Number(i.deposit_required)>0?'<div><span>Deposit requested</span><span>'+money(i.deposit_required)+'</span></div>':'')+'</div>'+
+  '<div class="compact-invoice-toolbar"><button class="btn" id="addLine" type="button">+ Item</button>'+
+  '<button class="btn alt" id="addManyLines" type="button">+ Several items</button>'+
+  '<button class="btn alt" id="addPayment" type="button">Payment</button>'+
+  '<button class="btn alt" id="printInvoice" type="button">Print / PDF</button>'+
+  (i.status==='draft'?'<button class="btn alt" type="button" id="publishClientInvoice">Make visible to client</button>':'')+
+  '<button class="btn alt" id="closeInvoice" type="button">Close</button></div>'+
+  (i.status==='draft'?'<p class="compact-invoice-private">Private draft. Client cannot see this invoice until you choose Make visible to client.</p>':'')+
+  '</div>');
+ document.querySelector('#modal .dialog')?.classList.add('compact-invoice-dialog');
  if($('invoiceCustomerProfile'))$('invoiceCustomerProfile').onclick=()=>editCustomer(i.customer_id);
  $('editInvoice').onclick=()=>editInvoice(id);
  $('addLine').onclick=()=>editInvoiceLine(id,null);
