@@ -1,0 +1,56 @@
+name: Deploy Garnished Catering Studio to Cloudflare Workers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - manifest.webmanifest
+      - assets/**
+      - scripts/prepare-cloudflare-release.py
+      - wrangler.jsonc
+      - .github/workflows/deploy-cloudflare.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: garnished-cloudflare-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Build and deploy studio
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stage and validate public assets
+        run: python3 scripts/prepare-cloudflare-release.py
+
+      - name: Show build contents
+        run: find dist -type f -print | sort
+
+      - name: Explain required Cloudflare credentials
+        if: ${{ env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == '' }}
+        run: |
+          echo "::warning::Cloudflare deploy skipped. Configure repository secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, then rerun this workflow."
+          echo "No deployment was attempted and the existing live Worker was not changed."
+
+      - name: Deploy to Cloudflare Workers
+        if: ${{ env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+
+      - name: Report expected live build
+        if: ${{ env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' }}
+        run: |
+          echo "Build staged and deployment requested for Garnished Catering Studio"
+          grep -o 'name="garnished-build" content="[^"]*"' dist/index.html
