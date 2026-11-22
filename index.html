@@ -320,7 +320,7 @@ function person(id){return state.customers.find(x=>x.id===id)?.name||'Unassigned
  if(select)select.onchange=()=>{view=select.value;render()};
  document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>{view=button.dataset.view;render()});
 }
-function render(){nav();const pages={dashboard:dashboard,events:()=>recordList('events'),planner:planner,tasks:()=>recordList('tasks'),messages:messagePage,customers:()=>recordList('customers'),invoices:invoiceList,shopping_items:shoppingPage,settings:settingsPage,account:studioAccountPage,team:teamPage};$('content').innerHTML=(pages[view]||dashboard)();if($('emailInviteForm'))$('emailInviteForm').onsubmit=createInvite;if($('clientInviteForm'))$('clientInviteForm').onsubmit=createClientInvite;if($('bulkShopping'))$('bulkShopping').onclick=openBatchShopping;if($('settingsForm'))$('settingsForm').onsubmit=saveBusinessSettings;if($('reminderDigestForm'))$('reminderDigestForm').onsubmit=saveReminderDigestPreferences;if($('accountProfileForm'))wirePersonalAccountSettings();if($('homeInstall'))$('homeInstall').onclick=showInstallInstructions;if($('refreshReminderCenter'))$('refreshReminderCenter').onclick=async()=>{await load()};document.querySelectorAll('[data-reminder-done]').forEach(b=>b.onclick=()=>{if(confirm('Mark this task complete?'))update('tasks',b.dataset.reminderDone,{status:'done',completed_at:now()}).catch(err=>toast(err.message))});document.querySelectorAll('[data-reminder-invoice]').forEach(b=>b.onclick=()=>openInvoice(b.dataset.reminderInvoice));document.querySelectorAll('[data-cal-date]').forEach(b=>b.onclick=()=>{selectedCalendarDate=b.dataset.calDate;calendarCursor=new Date(selectedCalendarDate+'T12:00:00');view='planner';plannerMode='calendar';render()});document.querySelectorAll('[data-planner-mode]').forEach(b=>b.onclick=()=>{plannerMode=b.dataset.plannerMode;render()});document.querySelectorAll('[data-cal-step]').forEach(b=>b.onclick=()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+Number(b.dataset.calStep),1);selectedCalendarDate='';render()});document.querySelectorAll('[data-cal-event]').forEach(b=>b.onclick=()=>openPlanner(b.dataset.calEvent));if($('importInvoices'))$('importInvoices').onclick=openInvoiceImport;if($('invoiceSearch'))$('invoiceSearch').oninput=filterInvoicesInPlace;if($('invoiceStatusFilter'))$('invoiceStatusFilter').onchange=filterInvoicesInPlace;if($('refreshMessages'))$('refreshMessages').onclick=async()=>{await load();view='messages';render()};if($('newConversation'))$('newConversation').onclick=newConversation;if($('startFirstConversation'))$('startFirstConversation').onclick=newConversation;document.querySelectorAll('[data-thread]').forEach(b=>b.onclick=()=>{const id=b.dataset.thread;const t=(state.messages||[]).find(m=>m.id===id);const u=new URL(location.href);u.searchParams.set('thread',id);history.replaceState(null,'',u.pathname+u.search);render()});if($('sendMessageForm'))$('sendMessageForm').onsubmit=sendMessage;document.querySelectorAll('[data-reply]').forEach(b=>b.onclick=()=>{const target=$('messageReplyTo');if(target){target.value=b.dataset.reply;$('messageBody').focus();$('replyHint').textContent='Replying in this conversation';}});document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.copy);toast('Invite code copied')}catch{toast('Select and copy the code manually')}});document.querySelectorAll('[data-customer-edit]').forEach(b=>b.onclick=()=>editCustomer(b.dataset.customerEdit));document.querySelectorAll('[data-new]').forEach(n=>n.onclick=()=>newRecord(n.dataset.new));document.querySelectorAll('[data-quick-new]').forEach(b=>b.onclick=()=>newRecord(b.dataset.quickNew));document.querySelectorAll('[data-quick-shopping]').forEach(b=>b.onclick=openBatchShopping);document.querySelectorAll('[data-quick-draft]').forEach(b=>b.onclick=()=>openInvoice(b.dataset.quickDraft));document.querySelectorAll('[data-done]').forEach(n=>n.onclick=()=>update(n.dataset.done,n.dataset.id,{[n.dataset.done==='shopping_items'?'purchased':'status']:n.dataset.done==='shopping_items'?n.dataset.current!=='true':'done',...(n.dataset.done==='tasks'?{completed_at:now()}:{})}).catch(e=>toast(e.message)));document.querySelectorAll('[data-remove]').forEach(n=>n.onclick=()=>remove(n.dataset.remove,n.dataset.id).catch(e=>toast(e.message)));document.querySelectorAll('[data-plan]').forEach(n=>n.onclick=()=>openPlanner(n.dataset.plan));document.querySelectorAll('[data-beo]').forEach(n=>n.onclick=()=>openEventCommandSheet(n.dataset.beo));document.querySelectorAll('[data-generate]').forEach(n=>n.onclick=()=>generatePrep(n.dataset.generate));document.querySelectorAll('[data-openinvoice]').forEach(n=>n.onclick=()=>openInvoice(n.dataset.openinvoice));document.querySelectorAll('[data-pay]').forEach(n=>n.onclick=()=>recordPayment(n.dataset.pay));}
+function render(){nav();const pages={dashboard:dashboard,events:()=>recordList('events'),planner:planner,tasks:()=>recordList('tasks'),messages:messagePage,customers:()=>recordList('customers'),invoices:invoiceList,shopping_items:shoppingPage,settings:settingsPage,account:studioAccountPage,team:teamPage};$('content').innerHTML=(pages[view]||dashboard)();if($('emailInviteForm'))$('emailInviteForm').onsubmit=createInvite;if($('clientInviteForm'))$('clientInviteForm').onsubmit=createClientInvite;if($('bulkShopping'))$('bulkShopping').onclick=openBatchShopping;if($('settingsForm'))$('settingsForm').onsubmit=saveBusinessSettings;if($('reminderDigestForm'))$('reminderDigestForm').onsubmit=saveReminderDigestPreferences;if($('accountProfileForm'))wirePersonalAccountSettings();if($('homeInstall'))$('homeInstall').onclick=showInstallInstructions;if($('refreshReminderCenter'))$('refreshReminderCenter').onclick=async()=>{await load()};document.querySelectorAll('[data-reminder-done]').forEach(b=>b.onclick=()=>{if(confirm('Mark this task complete?'))update('tasks',b.dataset.reminderDone,{status:'done',completed_at:now()}).catch(err=>toast(err.message))});document.querySelectorAll('[data-reminder-invoice]').forEach(b=>b.onclick=()=>openInvoice(b.dataset.reminderInvoice));document.querySelectorAll('[data-cal-date]').forEach(b=>b.onclick=()=>{selectedCalendarDate=b.dataset.calDate;calendarCursor=new Date(selectedCalendarDate+'T12:00:00');view='planner';plannerMode='calendar';render()});document.querySelectorAll('[data-planner-mode]').forEach(b=>b.onclick=()=>{plannerMode=b.dataset.plannerMode;render()});document.querySelectorAll('[data-cal-step]').forEach(b=>b.onclick=()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+Number(b.dataset.calStep),1);selectedCalendarDate='';render()});document.querySelectorAll('[data-cal-event]').forEach(b=>b.onclick=()=>openPlanner(b.dataset.calEvent));if($('importInvoices'))$('importInvoices').onclick=openInvoiceImport;if($('importPdfInvoice'))$('importPdfInvoice').onclick=openPdfInvoiceImport;if($('invoiceSearch'))$('invoiceSearch').oninput=filterInvoicesInPlace;if($('invoiceStatusFilter'))$('invoiceStatusFilter').onchange=filterInvoicesInPlace;if($('refreshMessages'))$('refreshMessages').onclick=async()=>{await load();view='messages';render()};if($('newConversation'))$('newConversation').onclick=newConversation;if($('startFirstConversation'))$('startFirstConversation').onclick=newConversation;document.querySelectorAll('[data-thread]').forEach(b=>b.onclick=()=>{const id=b.dataset.thread;const t=(state.messages||[]).find(m=>m.id===id);const u=new URL(location.href);u.searchParams.set('thread',id);history.replaceState(null,'',u.pathname+u.search);render()});if($('sendMessageForm'))$('sendMessageForm').onsubmit=sendMessage;document.querySelectorAll('[data-reply]').forEach(b=>b.onclick=()=>{const target=$('messageReplyTo');if(target){target.value=b.dataset.reply;$('messageBody').focus();$('replyHint').textContent='Replying in this conversation';}});document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.copy);toast('Invite code copied')}catch{toast('Select and copy the code manually')}});document.querySelectorAll('[data-customer-edit]').forEach(b=>b.onclick=()=>editCustomer(b.dataset.customerEdit));document.querySelectorAll('[data-new]').forEach(n=>n.onclick=()=>newRecord(n.dataset.new));document.querySelectorAll('[data-quick-new]').forEach(b=>b.onclick=()=>newRecord(b.dataset.quickNew));document.querySelectorAll('[data-quick-shopping]').forEach(b=>b.onclick=openBatchShopping);document.querySelectorAll('[data-quick-draft]').forEach(b=>b.onclick=()=>openInvoice(b.dataset.quickDraft));document.querySelectorAll('[data-done]').forEach(n=>n.onclick=()=>update(n.dataset.done,n.dataset.id,{[n.dataset.done==='shopping_items'?'purchased':'status']:n.dataset.done==='shopping_items'?n.dataset.current!=='true':'done',...(n.dataset.done==='tasks'?{completed_at:now()}:{})}).catch(e=>toast(e.message)));document.querySelectorAll('[data-remove]').forEach(n=>n.onclick=()=>remove(n.dataset.remove,n.dataset.id).catch(e=>toast(e.message)));document.querySelectorAll('[data-plan]').forEach(n=>n.onclick=()=>openPlanner(n.dataset.plan));document.querySelectorAll('[data-beo]').forEach(n=>n.onclick=()=>openEventCommandSheet(n.dataset.beo));document.querySelectorAll('[data-generate]').forEach(n=>n.onclick=()=>generatePrep(n.dataset.generate));document.querySelectorAll('[data-openinvoice]').forEach(n=>n.onclick=()=>openInvoice(n.dataset.openinvoice));document.querySelectorAll('[data-pay]').forEach(n=>n.onclick=()=>recordPayment(n.dataset.pay));}
 function header(t,sub,button){return `<div class="actions" style="justify-content:space-between;align-items:end"><div><h1>${t}</h1><p>${sub}</p></div>${button?`<button class="btn" data-new="${button}">+ Add ${button==='shopping_items'?'item':button.slice(0,-1)}</button>`:''}</div>`}
 
 function reminderCenter(){
@@ -789,6 +789,119 @@ function parseInvoiceCsv(src){
  for(const [number,lines] of invoices){const customer=lines[0].customer_name.toLowerCase();if(lines.some(l=>l.customer_name.toLowerCase()!==customer))throw Error('Invoice '+number+' has conflicting customers')}
  return records;
 }
+
+function openPdfInvoiceImport(){
+ openModal('Import invoice from PDF',
+ '<p class="small">Choose a PDF (up to 8 pages, 12 MB). Text and scanned pages are read in this browser. Nothing is saved until you review and confirm. Keep the original PDF separately; it is not stored in Garnished.</p>'+
+ '<label for="garnishedPdfFile">PDF invoice</label><input id="garnishedPdfFile" type="file" accept=".pdf,application/pdf">'+
+ '<div id="garnishedPdfProgress" class="notice" role="status" style="margin-top:12px">No file selected.</div>'+
+ '<div id="garnishedPdfReview"></div><div class="actions" style="margin-top:12px"><button id="cancelPdfInvoice" class="btn alt" type="button">Cancel</button></div>');
+ $('cancelPdfInvoice').onclick=closeModal;
+ $('garnishedPdfFile').onchange=async()=>{
+  const file=$('garnishedPdfFile').files?.[0];
+  if(!file)return;
+  const progress=$('garnishedPdfProgress'),review=$('garnishedPdfReview');
+  review.replaceChildren();progress.textContent='Preparing PDF…';
+  try{
+   const mod=await import('/assets/garnished-invoice-pdf.mjs');
+   const parsed=await mod.readGarnishedInvoicePdf(file,{progress:s=>{if(progress)progress.textContent=s}});
+   if(!$('garnishedPdfReview'))return; // dialog was closed
+   const suggested=mod.suggestInvoiceFields(parsed.text);
+   progress.textContent='Read '+parsed.pages+' page(s)'+(parsed.usedOcr?' (scanned text recognized)':'')+'. Check every field carefully; extracted values are suggestions.';
+   showPdfInvoiceReview(suggested,parsed.text);
+  }catch(err){if(progress)progress.textContent='PDF could not be read: '+err.message}
+ };
+}
+function showPdfInvoiceReview(data,raw){
+ const host=$('garnishedPdfReview');if(!host)return;
+ const value=(name,label,type='text',v='')=>
+  '<div><label for="pdf_'+name+'">'+label+'</label><input id="pdf_'+name+'" type="'+type+'" value="'+esc(v??'')+'" '+(type==='number'?'step="0.01" min="0"':'')+'></div>';
+ host.innerHTML='<div class="panel" style="padding:12px;margin-top:12px"><h2>Review extracted invoice</h2>'+
+ '<p class="small">All fields are editable. Unknown values stay blank. Imported invoice starts as a private draft.</p>'+
+ '<div class="formgrid">'+
+ value('invoice_number','Invoice number','text',data.invoice_number)+
+ value('customer_name','Customer name','text',data.customer_name)+
+ value('customer_email','Customer email','email',data.customer_email)+
+ value('issue_date','Issue date','date',data.issue_date)+
+ value('due_date','Due date','date',data.due_date)+
+ value('tax_amount','Tax amount ($)','number',data.tax_amount??0)+
+ value('discount_amount','Discount amount ($)','number',data.discount_amount??0)+
+ value('deposit_required','Deposit requested ($)','number',data.deposit_required??0)+
+ '</div><h2 style="margin-top:15px">Food and service items</h2>'+
+ '<div id="pdfInvoiceLines"></div><button class="btn alt" type="button" id="pdfAddLine">+ Add item</button>'+
+ '<label for="pdf_notes">Additional invoice notes</label><textarea id="pdf_notes" maxlength="1800" rows="3" placeholder="Add information you need preserved."></textarea>'+
+ '<div id="pdfComparison" class="notice" style="margin-top:12px"></div>'+
+ '<details style="margin-top:14px"><summary>Check text extracted from original PDF</summary><pre style="white-space:pre-wrap;word-break:break-word;max-height:230px;overflow:auto;font-size:11px">'+esc(raw.slice(0,15000))+'</pre></details>'+
+ '<label class="account-show-password" style="margin-top:14px"><input type="checkbox" id="pdfReviewed"> I reviewed the customer, totals and every line item against the original PDF.</label>'+
+ '<div id="pdfImportError" role="alert" class="small" style="margin-top:10px"></div>'+
+ '<button class="btn" id="pdfSaveDraft" type="button" disabled style="margin-top:12px">Save reviewed invoice as draft</button></div>';
+ const lines=$('pdfInvoiceLines'),add=$('pdfAddLine');
+ const addLine=(i={description:'',quantity:1,unit_price:0})=>{
+  if(lines.children.length>=50)return toast('Up to 50 lines per PDF');
+  const row=document.createElement('div');
+  row.className='pdf-import-line';
+  row.style.cssText='border:1px solid #dce5dc;border-radius:10px;padding:10px;margin:8px 0';
+  row.innerHTML='<div class="formgrid"><div class="full"><label>Food or service item</label><input class="pdf-line-description" maxlength="500" value="'+esc(i.description)+'"></div>'+
+   '<div><label>Quantity</label><input class="pdf-line-qty" type="number" min="0.001" max="100000" step="any" value="'+esc(i.quantity)+'"></div>'+
+   '<div><label>Unit price ($)</label><input class="pdf-line-price" type="number" min="0" max="10000000" step="0.01" value="'+esc(i.unit_price)+'"></div></div>'+
+   '<button type="button" class="btn alt pdf-remove-line">Remove item</button>';
+  row.querySelector('.pdf-remove-line').onclick=()=>{row.remove();updatePdfTotal()};
+  row.querySelectorAll('input').forEach(el=>el.addEventListener('input',updatePdfTotal));
+  lines.append(row);updatePdfTotal();
+ };
+ for(const item of data.items)addLine(item);
+ if(!data.items.length)addLine();
+ add.onclick=()=>addLine();
+ for(const id of ['pdf_tax_amount','pdf_discount_amount','pdf_deposit_required'])$(id).addEventListener('input',updatePdfTotal);
+ $('pdfReviewed').onchange=()=>{$('pdfSaveDraft').disabled=!$('pdfReviewed').checked};
+ function updatePdfTotal(){
+  if(!$('pdfComparison'))return;
+  const subtotal=[...lines.querySelectorAll('.pdf-import-line')].reduce((sum,line)=>{
+   const q=Number(line.querySelector('.pdf-line-qty').value),p=Number(line.querySelector('.pdf-line-price').value);
+   return sum+(Number.isFinite(q)&&Number.isFinite(p)?q*p:0);
+  },0);
+  const amount=subtotal+Number($('pdf_tax_amount').value||0)-Number($('pdf_discount_amount').value||0);
+  const stated=data.stated_total;
+  $('pdfComparison').textContent='Calculated total: '+money(amount)+(stated!==null?' · PDF stated total: '+money(stated)+(Math.abs(amount-stated)>.05?' · TOTALS DIFFER — review before saving.':' · Totals match.'):' · PDF total not confidently recognized; compare manually.');
+ }
+ updatePdfTotal();
+ $('pdfSaveDraft').onclick=async()=>{
+  const error=$('pdfImportError'),button=$('pdfSaveDraft');
+  error.textContent='';
+  if(!$('pdfReviewed').checked)return;
+  const num=$('pdf_invoice_number').value.trim(),name=$('pdf_customer_name').value.trim(),email=$('pdf_customer_email').value.trim();
+  if(!num||!name){error.textContent='Enter an invoice number and customer name.';return}
+  if(num.length>100||name.length>200){error.textContent='Invoice number or customer name is too long.';return}
+  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){error.textContent='Check customer email.';return}
+  if(state.invoices.some(i=>(i.invoice_number||'').toLowerCase()===num.toLowerCase())){error.textContent='Invoice number already exists in Garnished.';return}
+  const items=[...lines.querySelectorAll('.pdf-import-line')].map(line=>({
+   item_description:line.querySelector('.pdf-line-description').value.trim(),
+   quantity:Number(line.querySelector('.pdf-line-qty').value),
+   unit_price:Number(line.querySelector('.pdf-line-price').value)
+  }));
+  if(!items.length||items.length>50||items.some(i=>!i.item_description||i.item_description.length>500||!Number.isFinite(i.quantity)||i.quantity<=0||i.quantity>100000||!Number.isFinite(i.unit_price)||i.unit_price<0||i.unit_price>10000000)){
+   error.textContent='Add valid descriptions, positive quantities, and nonnegative prices for every item.';return;
+  }
+  const getMoney=id=>Number($(id).value||0);
+  const tax=getMoney('pdf_tax_amount'),discount=getMoney('pdf_discount_amount'),deposit=getMoney('pdf_deposit_required');
+  if([tax,discount,deposit].some(x=>!Number.isFinite(x)||x<0||x>10000000)){error.textContent='Check the tax, discount and deposit amounts.';return}
+  const issue=$('pdf_issue_date').value,due=$('pdf_due_date').value;
+  if(!issue&&!confirm('Issue date was not found. The database will use today as the issue date. Continue?'))return;
+  if(!confirm('Import '+num+' as a private draft for '+name+'? No customer message or payment will be created.'))return;
+  button.disabled=true;button.textContent='Saving draft…';
+  const rows=items.map(i=>({...i,invoice_number:num,customer_name:name,customer_email:email,issue_date:issue,due_date:due,tax_amount:tax,discount_amount:discount,deposit_required:deposit,notes:$('pdf_notes').value.trim()}));
+  try{
+   const result=await req('/rest/v1/rpc/import_garnished_invoices','POST',{p_business_id:businessId,p_rows:rows});
+   const record=Array.isArray(result)?result[0]:result;
+   closeModal();view='invoices';await load();
+   toast((record?.imported_invoices||1)+' invoice saved as draft. No emails sent.');
+  }catch(err){
+   error.textContent='Could not import: '+err.message+' (nothing should be partially saved).';
+   button.disabled=false;button.textContent='Save reviewed invoice as draft';
+  }
+ };
+}
+
 function openInvoiceImport(){
  openModal('Import catering invoices', '<p class="small">CSV only for this first version. Required columns: invoice_number,customer_name,item_description,quantity,unit_price. Optional: customer_email,issue_date,due_date,deposit_required,tax_amount,discount_amount,notes. Dates must be YYYY-MM-DD.</p><input id="invoiceCsv" type="file" accept=".csv,text/csv"><div id="importPreview" class="notice" style="margin-top:12px">Choose a CSV to preview. No changes have been made.</div><div class="actions"><button class="btn" id="confirmImport" disabled>Import previewed invoices</button><button class="btn alt" id="cancelImport">Cancel</button></div>');
  let entries=[];$('cancelImport').onclick=closeModal;
@@ -830,8 +943,8 @@ function invoiceList(){
  '<p class="small">Open an invoice to add food or review payments. Draft invoices are not visible in the client portal.</p>'+
  '<div id="invoiceListRows">'+(rows||'<div class="empty">No invoices yet. Create one above.</div>')+'</div>'+
  '<div id="invoiceSearchEmpty" class="empty" hidden>No invoices match your search.</div></div>'+
- '<div class="panel"><button class="btn alt" id="importInvoices">Import invoice CSV</button>'+
- '<p class="small">Import a CSV with invoice number, customer, food items, prices and optional dates. Review before saving. No emails are sent.</p></div>';
+ '<div class="panel"><div class="actions"><button class="btn alt" id="importPdfInvoice">Import invoice PDF</button><button class="btn alt" id="importInvoices">Import invoice CSV</button></div>'+
+ '<p class="small">Import a PDF or CSV into an editable draft. PDF scans are read with text recognition in your browser. Review all details before saving; no emails are sent and the original PDF is not stored.</p></div>';
 }
 function filterInvoicesInPlace(){
  const term=($('invoiceSearch')?.value||'').trim().toLowerCase(),status=$('invoiceStatusFilter')?.value||'all';
