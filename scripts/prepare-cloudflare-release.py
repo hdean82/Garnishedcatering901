@@ -13,6 +13,7 @@ required = [
     "index.html",
     "manifest.webmanifest",
     "assets/garnished-logo.svg",
+    "assets/garnished-circle-transparent.png",
     "assets/garnished-home-icon.jpg",
 ]
 if dist.exists():
