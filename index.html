@@ -395,10 +395,9 @@ function newRecord(t){let forms={customers:field('Customer name','name','text',t
   if(entries.some(x=>!x.description||!Number.isFinite(x.quantity)||x.quantity<=0||!Number.isFinite(x.unit_price)||x.unit_price<0))return toast('Every item needs a name, positive quantity and valid price');
   if(entries.some(x=>x.unit_price>10000000))return toast('Check the price amounts');
   if(state.invoices.some(x=>x.invoice_number.toLowerCase()===v.invoice_number.toLowerCase()))return toast('Invoice number already exists');
-  const saved=await add('invoices',v);
-  try{await req('/rest/v1/invoice_items','POST',entries.map((x,position)=>({...x,business_id:businessId,invoice_id:saved.id,position})))}
-  catch(itemErr){await load();closeModal();view='invoices';render();toast('Invoice saved, but its items need attention: '+itemErr.message);return}
-  closeModal();await load();view='invoices';render();toast('Invoice and '+entries.length+' item(s) saved');openInvoice(saved.id);
+  const newId=await req('/rest/v1/rpc/create_garnished_invoice_with_items','POST',{p_business_id:businessId,p_invoice:v,p_items:entries.map((x,position)=>({...x,position}))});
+  closeModal();await load();view='invoices';render();toast('Invoice and '+entries.length+' food/service item(s) saved together');
+  if(typeof newId==='string')openInvoice(newId);
  }else{await add(t,v);closeModal();toast('Saved to Garnished Catering')}
 }catch(err){toast('Unable to save: '+err.message)}}}
 function openInvoice(id){
