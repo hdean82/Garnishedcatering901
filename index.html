@@ -762,21 +762,31 @@ function editInvoiceLine(invoiceId,lineId){
  };
 }
 function recordPayment(id){
+ const invoice=state.invoices.find(x=>x.id===id);if(!invoice)return;
+ const remaining=Math.max(0,invoiceTotal(id)-invoicePaid(id));
  const methods=[['Cash','Cash'],['Zelle','Zelle'],['Cash App','Cash App'],['Venmo','Venmo'],['Credit / debit card','Credit / debit card'],['Bank transfer / ACH','Bank transfer / ACH'],['Check','Check'],['Other','Other']];
- openModal('Record payment', '<form id="paymentForm">'+field('Amount received ($)','amount','number',true)+
- choose('Payment method','method_choice',methods)+field('Other method (when selected)','method_other')+
- field('Payment reference / confirmation number','reference')+
- '<div class="actions" style="margin-top:15px"><button class="btn" type="submit">Save payment</button><button class="btn alt" type="button" id="cancelPayment">Cancel</button></div></form>');
- $('f_amount').step='0.01';$('f_amount').min='0.01';
+ openModal('Record payment · '+invoice.invoice_number,
+  '<div class="notice"><strong>Balance remaining: '+money(remaining)+'</strong><p class="small" style="margin:5px 0 0">Record payments only after they have actually been received.</p></div>'+
+  '<form id="paymentForm"><div class="formgrid">'+field('Amount received ($)','amount','number',true)+
+  choose('Payment method','method_choice',methods)+field('Payment reference / confirmation number','reference')+
+  field('Other method (if selected)','method_other')+'</div>'+
+  (remaining>0?'<button type="button" class="btn alt" id="payRemaining" style="margin-top:8px">Use remaining balance · '+money(remaining)+'</button>':'')+
+  '<div class="actions" style="margin-top:15px"><button class="btn" id="savePayment" type="submit">Record received payment</button>'+
+  '<button class="btn alt" type="button" id="cancelPayment">Cancel</button></div></form>');
+ $('f_amount').step='0.01';$('f_amount').min='0.01';$('f_amount').inputMode='decimal';
  $('cancelPayment').onclick=()=>openInvoice(id);
+ if($('payRemaining'))$('payRemaining').onclick=()=>{$('f_amount').value=remaining.toFixed(2)};
  $('f_method_other').parentElement.style.display='none';
  $('f_method_choice').onchange=()=>{$('f_method_other').parentElement.style.display=$('f_method_choice').value==='Other'?'block':'none'};
  $('paymentForm').onsubmit=async e=>{
-  e.preventDefault();const amount=Number(val('amount'));
+  e.preventDefault();
+  const amount=Number(val('amount'));
   const method=val('method_choice')==='Other'?val('method_other').trim():val('method_choice');
-  if(!Number.isFinite(amount)||amount<=0||!method)return toast('Enter a valid amount and payment method');
-  try{await add('payments',{invoice_id:id,amount,method,reference:val('reference')});openInvoice(id)}
-  catch(er){toast('Payment could not be saved: '+er.message)}
+  if(!Number.isFinite(amount)||amount<=0||!method)return toast('Enter a valid received amount and payment method');
+  if(amount>remaining+0.005&&!confirm('This payment exceeds the recorded balance by '+money(amount-remaining)+'. Record it anyway?'))return;
+  const btn=$('savePayment');btn.disabled=true;btn.textContent='Saving…';
+  try{await add('payments',{invoice_id:id,amount,method,reference:val('reference')});openInvoice(id);toast('Payment recorded')}
+  catch(err){btn.disabled=false;btn.textContent='Record received payment';toast('Payment could not be saved: '+err.message)}
  };
 }
 function printInvoice(id,openPrinter=true){
