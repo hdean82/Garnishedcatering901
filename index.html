@@ -1080,7 +1080,7 @@ function filterInvoicesInPlace(){
  });
  if($('invoiceSearchEmpty'))$('invoiceSearchEmpty').hidden=shown>0||state.invoices.length===0;
 }
-function openModal(title,body){$('modal .dialog')?.classList.remove('compact-invoice-dialog');$('modalTitle').textContent=title;$('modalBody').innerHTML=body;$('modal').classList.add('open')}function closeModal(){$('modal').classList.remove('open')}window.closeModal=closeModal;
+function openModal(title,body){document.querySelector('#modal .dialog')?.classList.remove('compact-invoice-dialog');$('modalTitle').textContent=title;$('modalBody').innerHTML=body;$('modal').classList.add('open')}function closeModal(){$('modal').classList.remove('open')}window.closeModal=closeModal;
 function field(label,id,type='text',required=false){return `<div><label for="f_${id}">${label}</label><input ${required?'required':''} id="f_${id}" type="${type}" ${type==='date'||type==='datetime-local'?'style="width:100%;min-height:44px;max-width:100%;font-size:16px;color-scheme:light"':''}></div>`}function area(label,id){return `<div class="full"><label>${label}</label><textarea id="f_${id}"></textarea></div>`}function choose(label,id,items){return `<div><label>${label}</label><select id="f_${id}">${items.map(([val,name])=>`<option value="${esc(val)}">${esc(name)}</option>`).join('')}</select></div>`}function optionalCustomers(){return [['','None'],...state.customers.map(x=>[x.id,x.name])]}function optionalEvents(){return [['','None'],...state.events.map(x=>[x.id,x.title])]}function val(id){return $('f_'+id)?.value||''}function opt(v){return v||null}function datetime(v){return v?new Date(v).toISOString():null}
 
 
@@ -1252,7 +1252,7 @@ function openInvoice(id){
   '<button class="btn alt" id="closeInvoice" type="button">Close</button></div>'+
   (i.status==='draft'?'<p class="compact-invoice-private">Private draft. Client cannot see this invoice until you choose Make visible to client.</p>':'')+
   '</div>');
- $('modal .dialog')?.classList.add('compact-invoice-dialog');
+ document.querySelector('#modal .dialog')?.classList.add('compact-invoice-dialog');
  if($('invoiceCustomerProfile'))$('invoiceCustomerProfile').onclick=()=>editCustomer(i.customer_id);
  $('editInvoice').onclick=()=>editInvoice(id);
  $('addLine').onclick=()=>editInvoiceLine(id,null);
