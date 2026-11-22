@@ -21,12 +21,14 @@ Deno.serve(async req=>{
   const {data:customer}=await db.from("customers").select("id,name,company_name").eq("id",a.customer_id).eq("business_id",a.business_id).maybeSingle();
   if(!customer)continue;
   const {data:business}=await db.from("businesses").select("name,phone,email").eq("id",a.business_id).maybeSingle();
-  const {data:invoices}=await db.from("invoices").select("id,invoice_number,status,issue_date,due_date,deposit_required,tax_amount,discount_amount").eq("business_id",a.business_id).eq("customer_id",a.customer_id).neq("status","void").order("issue_date",{ascending:false}).limit(100);
+  const {data:invoices}=await db.from("invoices").select("id,invoice_number,status,issue_date,due_date,deposit_required,tax_amount,discount_amount").eq("business_id",a.business_id).eq("customer_id",a.customer_id).in("status",["sent","partial","paid","overdue"]).order("issue_date",{ascending:false}).limit(100);
+  if(invoices===null)return reply({error:"Unable to load client invoices"},500);
   const ids=(invoices||[]).map(i=>i.id);
   let items=[],payments=[];
   if(ids.length){
    const ir=await db.from("invoice_items").select("invoice_id,item_category,description,quantity,unit_price,position").eq("business_id",a.business_id).in("invoice_id",ids).order("position",{ascending:true});
    const pr=await db.from("payments").select("invoice_id,amount,paid_at,method").eq("business_id",a.business_id).in("invoice_id",ids);
+   if(ir.error||pr.error)return reply({error:"Unable to load invoice details"},500);
    items=ir.data||[];payments=pr.data||[];
   }
   accounts.push({customer:{name:customer.name,company_name:customer.company_name},business:business||{name:"Garnished Catering"},invoices:(invoices||[]).map(i=>({
