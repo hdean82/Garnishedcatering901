@@ -669,7 +669,7 @@ async function acceptClientInvite(){
  if(!invite)return;
  safeStore.setItem('garnished_client_pending_invite',invite);
  try{
-  await req('/rest/v1/rpc/claim_garnished_client_invite','POST',{invitation_code:invite});
+  const res=await fetch(URL+'/functions/v1/claim-garnished-client-invite',{method:'POST',headers:authHeader(),body:JSON.stringify({invitation_code:invite})});const response=await res.json().catch(()=>({}));if(!res.ok||!response.accepted)throw Error(response.error||'Could not accept invitation');
   safeStore.removeItem('garnished_client_pending_invite');
   history.replaceState(null,'',location.pathname+'?client=1');
   toast('Client account connected');
