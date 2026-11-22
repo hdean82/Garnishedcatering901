@@ -16,6 +16,7 @@ required = [
     "assets/garnished-circle-transparent.png",
     "assets/garnished-invoice-pdf.mjs",
     "assets/garnished-home-icon.jpg",
+    "assets/garnished-favicon.ico",
 ]
 if dist.exists():
     shutil.rmtree(dist)
