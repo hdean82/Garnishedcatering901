@@ -1,10 +1,29 @@
 // Garnished invoice PDF reader. Files are processed in-browser and never uploaded.
-const PDFJS="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
-const WORKER="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
+// Use the widely supported classic build rather than the ESM build, which can fail
+// during getDocument initialization on some browser environments.
+const PDFJS="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+const WORKER="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 const OCR="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
 let pdfjsPromise=null,ocrPromise=null;
 function pdfjs(){
- if(!pdfjsPromise)pdfjsPromise=import(PDFJS).then(m=>{m.GlobalWorkerOptions.workerSrc=WORKER;return m});
+ if(window.pdfjsLib?.getDocument){
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc=WORKER;
+  return Promise.resolve(window.pdfjsLib);
+ }
+ if(!pdfjsPromise)pdfjsPromise=new Promise((resolve,reject)=>{
+  const script=document.createElement("script");
+  script.src=PDFJS;script.async=true;
+  script.onload=()=>{
+   const lib=window.pdfjsLib;
+   if(typeof lib?.getDocument!=="function"||!lib.GlobalWorkerOptions){
+    reject(Error("PDF reader did not initialize; reload the page and retry"));return;
+   }
+   lib.GlobalWorkerOptions.workerSrc=WORKER;
+   resolve(lib);
+  };
+  script.onerror=()=>reject(Error("Could not load the PDF reader. Check your connection or content blocker."));
+  document.head.append(script);
+ }).catch(error=>{pdfjsPromise=null;throw error});
  return pdfjsPromise;
 }
 function ocrLib(){
@@ -31,8 +50,16 @@ export async function readGarnishedInvoicePdf(file,{progress=()=>{}}={}){
  if(!file||!(/\.pdf$/i.test(file.name)||file.type==="application/pdf"))throw Error("Choose a PDF file");
  if(file.size>12*1024*1024)throw Error("PDF must be 12 MB or smaller");
  const lib=await pdfjs();
- const task=lib.getDocument({data:new Uint8Array(await file.arrayBuffer()),useSystemFonts:true});
- let doc;try{doc=await task.promise}catch(e){throw Error("Unable to read PDF. Check whether it is encrypted or damaged.")}
+ let task,doc;
+ try{
+  const bytes=new Uint8Array(await file.arrayBuffer());
+  if(bytes.length<5||String.fromCharCode(...bytes.slice(0,5))!=="%PDF-")throw Error("This file does not contain PDF data");
+  task=lib.getDocument({data:bytes,useSystemFonts:true});
+  doc=await task.promise;
+ }catch(e){
+  const detail=String(e?.message||e||"Unknown error");
+  throw Error("Could not open PDF: "+detail.slice(0,240));
+ }
  const pages=Math.min(doc.numPages,8);
  if(doc.numPages>8)throw Error("For safety, import a PDF of up to 8 pages at a time");
  let text="",usedOcr=false,ocrWorker=null;
@@ -59,7 +86,7 @@ export async function readGarnishedInvoicePdf(file,{progress=()=>{}}={}){
   }
  }finally{
   if(ocrWorker)await ocrWorker.terminate().catch(()=>{});
-  await task.destroy().catch(()=>{});
+  if(task)await task.destroy().catch(()=>{});
  }
  if(text.replace(/\s/g,"").length<30)throw Error("No readable invoice text was found. Try a clearer PDF scan.");
  progress("Extraction complete");
