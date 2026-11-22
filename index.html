@@ -675,8 +675,19 @@ function editCustomer(id){
  for(const [label,key,type] of keys){
   form+='<div class="'+(type==='textarea'?'full':'')+'"><label for="cust_'+key+'">'+label+'</label>'+(type==='textarea'?'<textarea id="cust_'+key+'" rows="2">'+esc(customer[key]||'')+'</textarea>':'<input type="'+type+'" id="cust_'+key+'" value="'+esc(customer[key]||'')+'">')+'</div>';
  }
- form+='</div><div class="actions"><button class="btn" type="submit">Save customer</button><button class="btn alt" type="button" id="cancelCustomer">Cancel</button></div></form>';
- openModal('Customer profile',form);
+ form+='</div><div class="actions"><button class="btn" type="submit">Save customer</button><button class="btn alt" type="button" id="cancelCustomer">Close profile</button></div></form>';
+ const customerInvoices=state.invoices.filter(i=>i.customer_id===id).sort((a,b)=>String(b.issue_date||b.created_at||'').localeCompare(String(a.issue_date||a.created_at||'')));
+ const linkedEvents=state.events.filter(e=>e.customer_id===id);
+ const balance=customerInvoices.filter(i=>i.status!=='void').reduce((n,i)=>n+Math.max(0,invoiceTotal(i.id)-invoicePaid(i.id)),0);
+ const invoiceRows=customerInvoices.map(i=>'<div class="item"><div><strong>'+esc(i.invoice_number)+'</strong><div class="muted">'+esc(i.status)+' · '+fmt(i.issue_date)+' · Due '+fmt(i.due_date)+'</div><div class="muted">Total '+money(invoiceTotal(i.id))+' · Paid '+money(invoicePaid(i.id))+' · Balance '+money(Math.max(0,invoiceTotal(i.id)-invoicePaid(i.id)))+'</div></div><button class="btn alt" type="button" data-customer-invoice="'+esc(i.id)+'">Open invoice</button></div>').join('');
+ const eventRows=linkedEvents.map(e=>'<div class="item"><div><strong>'+esc(e.title)+'</strong><div class="muted">'+fmt(e.event_at)+' · '+esc(e.status)+'</div></div><button class="btn alt" type="button" data-customer-event="'+esc(e.id)+'">Open prep</button></div>').join('');
+ const info='<div class="panel"><h2>'+esc(customer.company_name||customer.name)+'</h2><p class="small">'+esc(customer.name)+' · '+customerInvoices.length+' invoice(s) · Outstanding '+money(balance)+'</p></div>'+
+  '<div class="panel"><h2>Linked invoices</h2>'+(invoiceRows||'<p class="small">No invoices linked yet.</p>')+'</div>'+
+  '<div class="panel"><h2>Linked catering events</h2>'+(eventRows||'<p class="small">No events linked yet.</p>')+'</div>'+
+  '<h2>Edit customer details</h2>';
+ openModal('Customer profile',info+form);
+ $('modalBody').querySelectorAll('[data-customer-invoice]').forEach(b=>b.onclick=()=>openInvoice(b.dataset.customerInvoice));
+ $('modalBody').querySelectorAll('[data-customer-event]').forEach(b=>b.onclick=()=>openPlanner(b.dataset.customerEvent));
  $('cancelCustomer').onclick=closeModal;
  $('editCustomerForm').onsubmit=async e=>{
   e.preventDefault();const patch={};keys.forEach(([_,key])=>patch[key]=$('cust_'+key).value.trim());
@@ -1102,7 +1113,7 @@ function openInvoice(id){
  const items=state.invoice_items.filter(x=>x.invoice_id===id);
  const ev=state.events.find(x=>x.id===i.event_id);
  openModal('Invoice '+i.invoice_number,
-  '<div class="actions" style="justify-content:space-between;align-items:center"><div><span class="pill">'+esc(i.status)+'</span> <strong>'+esc(person(i.customer_id))+'</strong></div><button class="btn alt" id="editInvoice">Edit invoice</button></div>'+
+  '<div class="actions" style="justify-content:space-between;align-items:center"><div><span class="pill">'+esc(i.status)+'</span> <strong>'+esc(person(i.customer_id))+'</strong></div><div class="actions">'+(i.customer_id?'<button class="btn alt" id="invoiceCustomerProfile">Customer profile</button>':'')+'<button class="btn alt" id="editInvoice">Edit invoice</button></div></div>'+
   (ev?'<p class="small">Event: '+esc(ev.title)+' · '+fmt(ev.event_at)+' · '+esc(ev.venue||'Venue TBD')+' · '+esc(ev.guest_count??'—')+' guests</p>':'')+
   '<div id="invoiceItems">'+(items.map(x=>'<div class="item"><div><strong>'+esc(x.description)+'</strong><div class="muted">'+esc(x.item_category||'Catering item')+'</div><div class="muted">'+Number(x.quantity)+' × '+money(x.unit_price)+' = '+money(Number(x.quantity)*Number(x.unit_price))+'</div></div><button class="btn alt" data-editline="'+esc(x.id)+'">Edit</button></div>').join('')||'<div class="empty">No line items yet</div>')+'</div>'+
   '<div class="right"><h2>Total '+money(invoiceTotal(id))+'</h2><p>Paid '+money(invoicePaid(id))+' · Balance '+money(invoiceTotal(id)-invoicePaid(id))+'</p><p>Deposit requested '+money(i.deposit_required)+'</p></div>'+
@@ -1111,6 +1122,7 @@ function openInvoice(id){
   '<button class="btn alt" id="closeInvoice">Close</button></div>'+
   (i.status==='draft'?'<p class="small">Draft invoices remain private. Making an invoice visible does not send an email; the linked customer must have portal access.</p>':'')
  );
+ if($('invoiceCustomerProfile'))$('invoiceCustomerProfile').onclick=()=>editCustomer(i.customer_id);
  $('editInvoice').onclick=()=>editInvoice(id);
  $('addLine').onclick=()=>editInvoiceLine(id,null);
  $('addManyLines').onclick=()=>addSeveralInvoiceLines(id);
