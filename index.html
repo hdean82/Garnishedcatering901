@@ -559,12 +559,23 @@ function openInvoice(id){
   (ev?'<p class="small">Event: '+esc(ev.title)+' · '+fmt(ev.event_at)+' · '+esc(ev.venue||'Venue TBD')+' · '+esc(ev.guest_count??'—')+' guests</p>':'')+
   '<div id="invoiceItems">'+(items.map(x=>'<div class="item"><div><strong>'+esc(x.description)+'</strong><div class="muted">'+esc(x.item_category||'Catering item')+'</div><div class="muted">'+Number(x.quantity)+' × '+money(x.unit_price)+' = '+money(Number(x.quantity)*Number(x.unit_price))+'</div></div><button class="btn alt" data-editline="'+esc(x.id)+'">Edit</button></div>').join('')||'<div class="empty">No line items yet</div>')+'</div>'+
   '<div class="right"><h2>Total '+money(invoiceTotal(id))+'</h2><p>Paid '+money(invoicePaid(id))+' · Balance '+money(invoiceTotal(id)-invoicePaid(id))+'</p><p>Deposit requested '+money(i.deposit_required)+'</p></div>'+
-  '<div class="actions"><button class="btn" id="addLine">+ Add line item</button><button class="btn alt" id="addPayment">Record payment</button><button class="btn alt" id="printInvoice">Preview / PDF</button><button class="btn alt" id="closeInvoice">Close</button></div>'
+  '<div class="actions"><button class="btn" id="addLine">+ Add line item</button><button class="btn alt" id="addPayment">Record payment</button><button class="btn alt" id="printInvoice">Preview / PDF</button>'+
+  (i.status==='draft'?'<button class="btn" type="button" id="publishClientInvoice">Make visible to client</button>':'')+
+  '<button class="btn alt" id="closeInvoice">Close</button></div>'+
+  (i.status==='draft'?'<p class="small">Draft invoices remain private. Making an invoice visible does not send an email; the linked customer must have portal access.</p>':'')
  );
  $('editInvoice').onclick=()=>editInvoice(id);
  $('addLine').onclick=()=>editInvoiceLine(id,null);
  $('addPayment').onclick=()=>recordPayment(id);
  $('printInvoice').onclick=()=>previewInvoice(id);
+ if($('publishClientInvoice'))$('publishClientInvoice').onclick=async()=>{
+   if(!i.customer_id)return toast('Select a customer before making this invoice visible');
+   if(!items.length)return toast('Add at least one food or service item first');
+   if(!confirm('Make invoice '+i.invoice_number+' visible to the linked customer in their private portal? This does not send an email.'))return;
+   const button=$('publishClientInvoice');button.disabled=true;button.textContent='Saving…';
+   try{await update('invoices',id,{status:'sent'});openInvoice(id);toast('Invoice is now available in the linked customer portal. No email was sent.')}
+   catch(err){button.disabled=false;button.textContent='Make visible to client';toast('Could not update invoice: '+err.message)}
+ };
  $('closeInvoice').onclick=closeModal;
  document.querySelectorAll('[data-editline]').forEach(b=>b.onclick=()=>editInvoiceLine(id,b.dataset.editline));
 }
