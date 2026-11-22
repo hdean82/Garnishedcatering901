@@ -35,11 +35,13 @@ jobs:
       - name: Show build contents
         run: find dist -type f -print | sort
 
-      - name: Explain required Cloudflare credentials
-        if: ${{ env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == '' }}
+      - name: Check Cloudflare deployment credentials
         run: |
-          echo "::warning::Cloudflare deploy skipped. Configure repository secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, then rerun this workflow."
-          echo "No deployment was attempted and the existing live Worker was not changed."
+          if [[ -z "$CLOUDFLARE_API_TOKEN" || -z "$CLOUDFLARE_ACCOUNT_ID" ]]; then
+            echo "::error::Deployment blocked: configure both CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in GitHub Actions repository secrets."
+            echo "No deployment was attempted and the existing live Worker was not changed."
+            exit 1
+          fi
 
       - name: Deploy to Cloudflare Workers
         if: ${{ env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' }}
