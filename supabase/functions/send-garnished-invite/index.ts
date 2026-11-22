@@ -4,8 +4,8 @@ const headersFor=(origin)=>({"Access-Control-Allow-Origin":ORIGINS.has(origin)?o
 const reply=(data,status=200,origin="")=>new Response(JSON.stringify(data),{status,headers:headersFor(origin)});
 Deno.serve(async req=>{
  const origin=req.headers.get("origin")||"";
- if(!ORIGINS.has(origin))return response({error:"Invalid origin"},403,origin);
  const response=(data,status=200)=>reply(data,status,origin);
+ if(!ORIGINS.has(origin))return response({error:"Invalid origin"},403);
  if(req.method==="OPTIONS")return new Response(null,{headers:headersFor(origin)});
  if(req.method!=="POST")return response({error:"Method not allowed"},405);
  try {
