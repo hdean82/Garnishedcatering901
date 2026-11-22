@@ -608,13 +608,14 @@ function openInvoice(id){
   (ev?'<p class="small">Event: '+esc(ev.title)+' · '+fmt(ev.event_at)+' · '+esc(ev.venue||'Venue TBD')+' · '+esc(ev.guest_count??'—')+' guests</p>':'')+
   '<div id="invoiceItems">'+(items.map(x=>'<div class="item"><div><strong>'+esc(x.description)+'</strong><div class="muted">'+esc(x.item_category||'Catering item')+'</div><div class="muted">'+Number(x.quantity)+' × '+money(x.unit_price)+' = '+money(Number(x.quantity)*Number(x.unit_price))+'</div></div><button class="btn alt" data-editline="'+esc(x.id)+'">Edit</button></div>').join('')||'<div class="empty">No line items yet</div>')+'</div>'+
   '<div class="right"><h2>Total '+money(invoiceTotal(id))+'</h2><p>Paid '+money(invoicePaid(id))+' · Balance '+money(invoiceTotal(id)-invoicePaid(id))+'</p><p>Deposit requested '+money(i.deposit_required)+'</p></div>'+
-  '<div class="actions"><button class="btn" id="addLine">+ Add line item</button><button class="btn alt" id="addPayment">Record payment</button><button class="btn alt" id="printInvoice">Preview / PDF</button>'+
+  '<div class="actions"><button class="btn" id="addLine">+ Add one item</button><button class="btn alt" id="addManyLines">+ Add several</button><button class="btn alt" id="addPayment">Record payment</button><button class="btn alt" id="printInvoice">Preview / PDF</button>'+
   (i.status==='draft'?'<button class="btn" type="button" id="publishClientInvoice">Make visible to client</button>':'')+
   '<button class="btn alt" id="closeInvoice">Close</button></div>'+
   (i.status==='draft'?'<p class="small">Draft invoices remain private. Making an invoice visible does not send an email; the linked customer must have portal access.</p>':'')
  );
  $('editInvoice').onclick=()=>editInvoice(id);
  $('addLine').onclick=()=>editInvoiceLine(id,null);
+ $('addManyLines').onclick=()=>addSeveralInvoiceLines(id);
  $('addPayment').onclick=()=>recordPayment(id);
  $('printInvoice').onclick=()=>previewInvoice(id);
  if($('publishClientInvoice'))$('publishClientInvoice').onclick=async()=>{
@@ -679,6 +680,35 @@ function wireInvoiceTermPreset(){
 }
 function invoiceTermOptions(){return [['','Choose optional payment terms'],['Due upon receipt','Due upon receipt'],['Net 7','Net 7 days from invoice date'],['Net 10','Net 10 days from invoice date'],['Net 15','Net 15 days from invoice date'],['Net 30','Net 30 days from invoice date'],['50% deposit','50% deposit required; balance due as agreed'],['Deposit to confirm','Deposit required to confirm booking; balance due as agreed'],['Custom','Custom — write your own terms below']]}
 function invoiceCategoryOptions(){return [['Menu package','Menu package'],['Entree','Entree'],['Side dish','Side dish'],['Dessert','Dessert'],['Beverage','Beverage'],['Serving / portion','Serving / portion'],['Staffing','Staffing'],['Delivery','Delivery'],['Setup','Setup'],['Equipment / rental','Equipment / rental'],['Service fee','Service fee'],['Additional charge','Additional charge'],['Other','Other']]}
+
+function addSeveralInvoiceLines(invoiceId){
+ const invoice=state.invoices.find(x=>x.id===invoiceId);if(!invoice)return;
+ const isVisible=['sent','partial','paid','overdue'].includes(invoice.status);
+ openModal('Add food & services · '+invoice.invoice_number,
+  (isVisible?'<div class="notice">This invoice is already visible in the customer portal. Added items will change the amount customers see.</div>':'')+
+  '<form id="multiInvoiceLineForm"><div class="invoice-item-panel">'+
+  '<div class="actions" style="justify-content:space-between;align-items:center"><h2>Food & service items</h2><button class="btn alt" type="button" id="addInvoiceFood">+ Add item</button></div>'+
+  '<div class="invoice-shortcuts"><button type="button" class="btn alt" data-invoice-shortcut="Entree">+ Entrée</button><button type="button" class="btn alt" data-invoice-shortcut="Side dish">+ Side</button>'+
+  '<button type="button" class="btn alt" data-invoice-shortcut="Dessert">+ Dessert</button><button type="button" class="btn alt" data-invoice-shortcut="Delivery">+ Delivery</button></div>'+
+  '<div id="invoiceEntries"></div><p class="small" id="invoiceEstimate">New items: $0.00</p></div>'+
+  '<div class="actions"><button type="submit" class="btn" id="saveMultiInvoiceLines">Save all items</button>'+
+  '<button type="button" class="btn alt" id="cancelMultiInvoiceLines">Cancel</button></div></form>');
+ wireInvoiceEntries();
+ $('cancelMultiInvoiceLines').onclick=()=>openInvoice(invoiceId);
+ $('multiInvoiceLineForm').onsubmit=async e=>{
+  e.preventDefault();const entries=collectInvoiceEntries();
+  if(!entries.length)return toast('Enter at least one food or service item');
+  if(entries.length>50)return toast('Maximum 50 items in one batch');
+  if(entries.some(x=>!x.description||!Number.isFinite(x.quantity)||x.quantity<=0||!Number.isFinite(x.unit_price)||x.unit_price<0||x.unit_price>10000000))return toast('Check every item name, quantity and price');
+  if(isVisible&&!confirm('This invoice is already visible to its customer. Add '+entries.length+' item(s) and update the customer total? No email will be sent.'))return;
+  const button=$('saveMultiInvoiceLines');button.disabled=true;button.textContent='Saving…';
+  const nextPosition=state.invoice_items.filter(x=>x.invoice_id===invoiceId).reduce((p,x)=>Math.max(p,Number(x.position)||0),-1)+1;
+  try{
+   await req('/rest/v1/invoice_items','POST',entries.map((x,index)=>({...x,business_id:businessId,invoice_id:invoiceId,position:nextPosition+index})));
+   await load();openInvoice(invoiceId);toast(entries.length+' items saved. No email sent.');
+  }catch(err){button.disabled=false;button.textContent='Save all items';toast('Could not save invoice items: '+err.message)}
+ };
+}
 function editInvoiceLine(invoiceId,lineId){
  const item=state.invoice_items.find(x=>x.id===lineId);
  openModal(item?'Edit line item':'Add line item',
