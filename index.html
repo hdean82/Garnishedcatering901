@@ -733,7 +733,10 @@ function addSeveralInvoiceLines(invoiceId){
 }
 function editInvoiceLine(invoiceId,lineId){
  const item=state.invoice_items.find(x=>x.id===lineId);
+ const invoice=state.invoices.find(x=>x.id===invoiceId);
+ const clientVisible=['sent','partial','paid','overdue'].includes(invoice?.status);
  openModal(item?'Edit line item':'Add line item',
+  (clientVisible?'<div class="notice">This invoice is visible to the client. Changes to items or prices will immediately update their invoice.</div>':'')+
   '<form id="lineForm">'+choose('Item category','item_category',invoiceCategoryOptions())+field('Item or service','description','text',true)+
   field('Quantity','quantity','number',true)+field('Price per unit ($)','unit_price','number',true)+
   '<div class="actions" style="margin-top:15px"><button class="btn" type="submit">'+(item?'Save item':'Add item')+'</button>'+
@@ -747,7 +750,7 @@ function editInvoiceLine(invoiceId,lineId){
  $('f_unit_price').step='0.01';$('f_unit_price').min='0';
  $('cancelLine').onclick=()=>openInvoice(invoiceId);
  if(item)$('deleteLine').onclick=async()=>{
-  if(!confirm('Remove this invoice item?'))return;
+  if(!confirm(clientVisible?'Remove this item from a client-visible invoice? The total will change; no email is sent.':'Remove this invoice item?'))return;
   try{await req('/rest/v1/invoice_items?id=eq.'+encodeURIComponent(item.id)+'&business_id=eq.'+encodeURIComponent(businessId),'DELETE');
       await load();openInvoice(invoiceId);toast('Item removed')}catch(err){toast('Could not remove item: '+err.message)}
  };
@@ -756,6 +759,7 @@ function editInvoiceLine(invoiceId,lineId){
    const description=val('description').trim(),item_category=val('item_category'),quantity=Number(val('quantity')),unit_price=Number(val('unit_price'));
    if(!description||!Number.isFinite(quantity)||quantity<=0||!Number.isFinite(unit_price)||unit_price<0)
      return toast('Enter a description, positive quantity and nonnegative price');
+   if(clientVisible&&!confirm('Save this change to an invoice that the client can already view? No email is sent.'))return;
    try{if(item)await update('invoice_items',item.id,{description,item_category,quantity,unit_price});
        else await add('invoice_items',{invoice_id:invoiceId,description,item_category,quantity,unit_price});
        openInvoice(invoiceId);toast(item?'Item updated':'Item added')}catch(err){toast('Could not save item: '+err.message)}
