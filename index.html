@@ -1603,28 +1603,29 @@ function openInvoiceImport(){
 function invoiceList(){
  const rows=state.invoices.map(i=>{
   const customer=person(i.customer_id),balance=i.document_type==='quote'?0:Math.max(0,invoiceTotal(i.id)-invoicePaid(i.id));
-  return '<div class="item invoice-search-row" data-filter="'+esc((i.invoice_number+' '+customer).toLowerCase())+'" data-status="'+esc(i.status)+'">'+
-   '<div><strong>'+esc(i.document_type==='quote'?'QUOTE':'INVOICE')+' '+esc(i.invoice_number)+' · '+esc(customer)+'</strong>'+
+  const documentLabel=i.document_type==='quote'?'QUOTE':'INVOICE';
+  return '<div class="item invoice-search-row" data-filter="'+esc((documentLabel+' '+i.invoice_number+' '+customer).toLowerCase())+'" data-status="'+esc(i.status)+'">'+
+   '<div><strong>'+documentLabel+' '+esc(i.invoice_number)+' · '+esc(customer)+'</strong>'+
    '<div class="muted">'+esc(displayStatus(i.status))+' · Due '+fmt(i.due_date)+' · Total '+money(invoiceTotal(i.id))+'</div>'+
    '<div class="muted">'+(i.document_type==='quote'?'Estimate':'Balance')+' '+money(i.document_type==='quote'?invoiceTotal(i.id):balance)+'</div></div>'+
    '<button class="btn alt" data-openinvoice="'+esc(i.id)+'">Open</button></div>';
  }).join('');
  return header('Quotes, invoices & payments','Prepare quotes, itemize catering, track payments and review client copies','invoices')+
  '<div class="panel"><div class="invoice-list-controls">'+
- '<div><label for="invoiceSearch">Find an invoice</label><input type="search" id="invoiceSearch" placeholder="Customer or invoice #" autocomplete="off"></div>'+
+ '<div><label for="invoiceSearch">Find a quote or invoice</label><input type="search" id="invoiceSearch" placeholder="Customer or document #" autocomplete="off"></div>'+
  '<div><label for="invoiceStatusFilter">Show</label><select id="invoiceStatusFilter">'+
- [['all','All invoices'],['draft','DRAFTS'],['sent','VISIBLE TO CLIENT'],['partial','PARTIALLY PAID'],['paid','PAID'],['overdue','OVERDUE'],['void','VOID']].map(([v,n])=>'<option value="'+v+'">'+n+'</option>').join('')+'</select></div></div>'+
+ [['all','All quotes and invoices'],['draft','DRAFTS'],['sent','VISIBLE TO CLIENT'],['partial','PARTIALLY PAID'],['paid','PAID'],['overdue','OVERDUE'],['void','VOID']].map(([v,n])=>'<option value="'+v+'">'+n+'</option>').join('')+'</select></div></div>'+
  '<p class="small">Open an invoice to add food or review payments. Draft invoices are not visible in the client portal.</p>'+
- '<div id="invoiceListRows">'+(rows||'<div class="empty">No invoices yet. Create one above.</div>')+'</div>'+
- '<div id="invoiceSearchEmpty" class="empty" hidden>No invoices match your search.</div></div>'+
+ '<div id="invoiceListRows">'+(rows||'<div class="empty">No quotes or invoices yet. Create one above.</div>')+'</div>'+
+ '<div id="invoiceSearchEmpty" class="empty" hidden>No quotes or invoices match your search.</div></div>'+
  '<div class="panel"><div class="actions"><button class="btn alt" id="importPdfInvoice">Import invoice PDF</button><button class="btn alt" id="importInvoices">Import invoice CSV</button></div>'+
  '<p class="small">Import a PDF or CSV into an editable draft. PDF scans are read with text recognition in your browser. Review all details before saving; no emails are sent and the original PDF is not stored.</p></div>';
 }
 function filterInvoicesInPlace(){
- const term=($('invoiceSearch')?.value||'').trim().toLowerCase(),status=$('invoiceStatusFilter')?.value||'all';
+ const term=($('invoiceSearch')?.value||'').toLowerCase().split(/\s+/).filter(Boolean),status=$('invoiceStatusFilter')?.value||'all';
  let shown=0;
  document.querySelectorAll('#invoiceListRows .invoice-search-row').forEach(row=>{
-  const match=(!term||(row.dataset.filter||'').includes(term))&&(status==='all'||row.dataset.status===status);
+  const match=term.every(word=>(row.dataset.filter||'').includes(word))&&(status==='all'||row.dataset.status===status);
   row.hidden=!match;if(match)shown++;
  });
  if($('invoiceSearchEmpty'))$('invoiceSearchEmpty').hidden=shown>0||state.invoices.length===0;
