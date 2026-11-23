@@ -504,7 +504,8 @@ html.garnished-modal-open,body.garnished-modal-open{overflow:hidden;overscroll-b
     <div class="garnished-inquiry-heading"><span>01 / YOUR EVENT</span><h2>Plan your event</h2><p>Just a few details to get us started. Fields marked * are required.</p></div>
     <form id="garnishedInquiryForm" novalidate>
      <div class="garnished-inquiry-formgrid">
-      <div><label for="inqName">Your name *</label><input id="inqName" name="contact_name" autocomplete="name" maxlength="120" required placeholder="First and last name"></div>
+      <div><label for="inqFirstName">First name *</label><input id="inqFirstName" name="first_name" autocomplete="given-name" maxlength="80" required placeholder="First name"></div>
+      <div><label for="inqLastName">Last name *</label><input id="inqLastName" name="last_name" autocomplete="family-name" maxlength="80" required placeholder="Last name"></div>
       <div><label for="inqEmail">Email address *</label><input id="inqEmail" name="email" type="email" autocomplete="email" maxlength="254" required placeholder="you@example.com"></div>
       <div><label for="inqPhone">Phone number</label><input id="inqPhone" name="phone" type="tel" autocomplete="tel" maxlength="40" placeholder="(901) 555-0123"></div>
       <div><label for="inqOrg">Company or organization</label><input id="inqOrg" name="organization" maxlength="120" placeholder="Optional"></div>
@@ -2212,6 +2213,7 @@ async function submitGarnishedInquiry(e){
  e.preventDefault();const form=e.currentTarget,button=$('garnishedInquirySubmit'),status=$('garnishedInquiryStatus');
  if(!form.reportValidity())return;
  const value=Object.fromEntries(new FormData(form).entries());
+ value.contact_name=[value.first_name,value.last_name].filter(Boolean).join(' ').trim();
  value.date_flexible=$('inqFlexible').checked;
  if(!value.event_date&&!value.date_flexible){status.textContent='Choose an event date or select the flexible-date option.';return}
  const guests=Number(value.guest_count);
