@@ -745,17 +745,19 @@ async function pollClientMessageBell(){
 setInterval(pollClientMessageBell,60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollClientMessageBell()});
 function activeClientMessageThreads(){
- const approvals=new Set((state.garnished_client_approvals||[]).map(a=>a.invoice_id));
+ const approvals=new Map((state.garnished_client_approvals||[]).map(a=>[a.invoice_id,Date.parse(a.approved_at)]));
  const messages=(state.garnished_client_review_messages||[]).filter(m=>m.author_role==='client');
  const receipts=(state.garnished_client_message_reads||[]).filter(r=>r.user_id===session?.user?.id);
  const threads=[];
  for(const invoice of state.invoices||[]){
-  if(approvals.has(invoice.id)&&invoice.status==='paid')continue;
-  if(approvals.has(invoice.id))continue; // approved orders belong in the calendar, not the inbox
-  const thread=messages.filter(m=>m.invoice_id===invoice.id).sort((a,b)=>String(a.created_at).localeCompare(String(b.created_at)));
+  const approvedAt=approvals.get(invoice.id);
+  const thread=messages.filter(m=>m.invoice_id===invoice.id&&(approvedAt===undefined||Date.parse(m.created_at)>approvedAt))
+   .sort((a,b)=>Date.parse(a.created_at)-Date.parse(b.created_at));
   if(!thread.length)continue;
-  const last=thread[thread.length-1],read=receipts.find(r=>r.invoice_id===invoice.id);
-  threads.push({invoice,last,unread:thread.filter(m=>!read||new Date(m.created_at)>new Date(read.last_read_at)).length});
+  const read=receipts.find(r=>r.invoice_id===invoice.id);
+  const unread=thread.filter(m=>!read||Date.parse(m.created_at)>Date.parse(read.last_read_at)).length;
+  if(approvedAt!==undefined&&!unread)continue;
+  threads.push({invoice,last:thread[thread.length-1],unread});
  }
  return threads.sort((a,b)=>String(b.last.created_at).localeCompare(String(a.last.created_at)));
 }
@@ -773,6 +775,7 @@ function openClientMessagesBell(){
  const threads=activeClientMessageThreads();
  const visible=threads.filter(t=>t.unread>0);
  const entries=visible.length?visible:threads;
+ if(entries.length===1)return openTeamReview(entries[0].invoice.id);
  openModal('Client messages',entries.length?entries.map(t=>'<button type="button" class="client-bell-thread" data-bell-message="'+esc(t.invoice.id)+'"><span><strong>'+esc(person(t.invoice.customer_id))+'</strong><small>'+esc(t.invoice.invoice_number)+' · '+esc(t.invoice.document_type==='quote'?'QUOTE':'INVOICE')+'</small><span>'+esc(t.last.body.slice(0,170))+'</span></span>'+(t.unread?'<em>'+t.unread+' NEW</em>':'')+'</button>').join(''):'<p class="small">No pending customer messages. Approved orders remain accessible from their invoice and calendar.</p>');
  $('modalBody').querySelectorAll('[data-bell-message]').forEach(b=>b.onclick=()=>openTeamReview(b.dataset.bellMessage));
 }
@@ -1364,8 +1367,12 @@ function unscheduledBookingPanel(){
  '<p class="small">These orders are saved but have no confirmed service date, so they cannot appear on a calendar day yet.</p>'+
  records.map(e=>{
   const invoices=(state.invoices||[]).filter(i=>i.event_id===e.id);
+  const inquiry=e.source_inquiry_id&&(state.garnished_inquiries||[]).find(q=>q.id===e.source_inquiry_id);
+  const date=e.requested_event_date||inquiry?.event_date,time=e.requested_service_time||inquiry?.service_time;
+  const requested=[date&&fmt(date),time].filter(Boolean).join(' · ');
   return '<div class="unscheduled-booking"><div><strong>'+esc(calendarCustomerName(e))+'</strong><div class="small">'+esc(e.title)+'</div>'+
   '<div class="small">DATE NOT SET'+(invoices.length?' · '+invoices.map(i=>'Invoice '+esc(i.invoice_number)+' ('+esc(displayStatus(i.status))+')').join(' · '):'')+'</div>'+
+  (requested?'<div class="small">Customer requested '+esc(requested)+'</div>':'')+
   '<div class="small">Invoice due date is not the catering service date.</div></div><button class="btn alt" type="button" data-schedule-event="'+esc(e.id)+'">Set event date</button></div>'
  }).join('')+'</section>';
 }
@@ -2472,6 +2479,8 @@ async function createInvoiceFromInquiry(id){
     business_id:businessId,customer_id:customer.id,source_inquiry_id:q.id,
     title:q.event_type+' — '+customer.name,
     status:'inquiry',event_at:null,guest_count:q.guest_count||null,
+    requested_event_date:q.event_date||null,requested_service_time:q.service_time||null,
+    requested_service_style:q.service_style||null,requested_budget_range:q.budget_range||null,
     venue:q.event_location||null,address:null,menu_notes:details,
     delivery_notes:'Requested service: '+(q.service_style||'Not yet selected')+'. Actual date, time, and address require confirmation.'
    });
