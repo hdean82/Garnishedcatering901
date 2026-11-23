@@ -752,7 +752,7 @@ function activeClientMessageThreads(){
  for(const invoice of state.invoices||[]){
   if(approvals.has(invoice.id)&&invoice.status==='paid')continue;
   if(approvals.has(invoice.id))continue; // approved orders belong in the calendar, not the inbox
-  const thread=messages.filter(m=>m.invoice_id===invoice.id);
+  const thread=messages.filter(m=>m.invoice_id===invoice.id).sort((a,b)=>String(a.created_at).localeCompare(String(b.created_at)));
   if(!thread.length)continue;
   const last=thread[thread.length-1],read=receipts.find(r=>r.invoice_id===invoice.id);
   threads.push({invoice,last,unread:thread.filter(m=>!read||new Date(m.created_at)>new Date(read.last_read_at)).length});
