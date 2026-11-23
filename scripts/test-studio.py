@@ -46,6 +46,22 @@ with sync_playwright() as playwright:
                 response = page.goto("http://127.0.0.1:8765" + path)
                 assert response.ok, path
                 expect(page.locator(element)).to_be_visible()
+            # First-time invitation and returning-user screens, without sending emails.
+            for portal in ("team", "client"):
+                page.evaluate("localStorage.clear()")
+                page.goto(f"http://127.0.0.1:8765/?{portal}=1&invite=fictional-only")
+                expect(page.locator("#firstAccess h1")).to_have_text("Create a password")
+                expect(page.locator("#inviteEmail")).to_be_visible()
+                page.locator("#existingLogin").click()
+                expect(page.locator("#password")).to_be_visible()
+                expect(page.locator("#firstAccess")).to_be_hidden()
+            page.evaluate("localStorage.clear()")
+            page.goto("http://127.0.0.1:8765/?team=1")
+            page.locator("#signup").click()
+            expect(page.locator("label[for='password']")).to_have_text("Create a password")
+            expect(page.locator("#forgotPassword")).to_be_hidden()
+            page.locator("#login").click()
+            expect(page.locator("label[for='password']")).to_have_text("Password")
             page.evaluate(fixture)
             search = page.locator("#invoiceSearch")
             search.fill("Quote 1042")
