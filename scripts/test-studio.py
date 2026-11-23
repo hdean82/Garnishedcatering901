@@ -65,6 +65,38 @@ with sync_playwright() as playwright:
             page.evaluate("closeModal();view='planner';calendarCursor=new Date(2026,10,1);render()")
             page.locator('[data-cal-date="2026-11-30"]').click()
             expect(page.locator(".studio-picked-day")).to_contain_text("9:30 PM")
+            page.evaluate("closeModal();newRecord('invoices')")
+            page.locator(".invoice-more summary").click()
+            for selector, value in [("#f_deposit_required", "25.50"), ("#f_tax_amount", "13.13"),
+                                    ("#f_discount_amount", "5.25")]:
+                field = page.locator(selector)
+                field.fill(value)
+                assert field.evaluate("input => input.checkValidity()"), selector
+            page.evaluate("closeModal();editInvoice('quote')")
+            page.get_by_text("Totals & payment terms", exact=True).click()
+            for selector in ("#f_deposit_required", "#f_tax_amount", "#f_discount_amount"):
+                field = page.locator(selector)
+                field.fill("1.25")
+                assert field.evaluate("input => input.checkValidity()"), selector
+            page.goto("http://127.0.0.1:8765/?client=1&show=invoices")
+            page.evaluate("""() => {
+                document.getElementById('app').style.display='grid';
+                document.getElementById('authBox').style.display='none';
+                clientPortalAccounts=[{
+                    business:{name:'Garnished Catering'}, customer:{name:'Avery Ellis'},
+                    invoices:[{id:'quote', invoice_number:'1042', document_type:'quote', status:'sent',
+                        client_order_details:'Please use the side entrance.\\nAsk for <the host>.',
+                        notes:'Private studio note'}]
+                }];
+                window.print=()=>{};
+                renderClientPortal();
+            }""")
+            details = page.locator(".client-invoice-document .client-order-details")
+            expect(details).to_contain_text("Please use the side entrance.")
+            expect(details.locator("p")).to_contain_text("Ask for <the host>.")
+            page.get_by_role("button", name="Print / Save PDF").click()
+            expect(page.locator("#invoicePrint")).to_contain_text("Please use the side entrance.")
+            expect(page.locator("#invoicePrint")).not_to_contain_text("Private studio note")
             assert not errors, errors
         except Exception:
             artifacts = Path("qa-artifacts")

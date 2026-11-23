@@ -7,6 +7,8 @@
 - Client, dates, fulfillment, totals, and a single **Order Details** section. The editable Order Details field maps to `invoices.notes`.
 - Historical `event_service_notes` data is retained in the database and shown in Order Details only when `notes` is empty, so old information is not silently deleted.
 - Existing payment terms and payment methods remain separate from Order Details.
+- Use **Order details for the customer** when creating or editing a document to include delivery or setup instructions in the customer portal and its PDF. The existing Order Details field is still populated from the inquiry and is excluded from the portal.
+- Deploy this change in order. Apply the `garnished_customer_order_details` migration, deploy the `garnished-client-portal-data` Edge Function using its existing settings, then release the website.
 - The same template supports PDF print and team preview, including the quote/invoice distinction.
 
 ## Customer portal and email access

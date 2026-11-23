@@ -21,7 +21,7 @@ Deno.serve(async req=>{
   const {data:customer}=await db.from("customers").select("id,name,company_name,address").eq("id",a.customer_id).eq("business_id",a.business_id).maybeSingle();
   if(!customer)continue;
   const {data:business}=await db.from("businesses").select("name,phone,email,client_approval_terms").eq("id",a.business_id).maybeSingle();
-  const {data:invoices}=await db.from("invoices").select("id,invoice_number,status,document_type,issue_date,due_date,deposit_required,tax_amount,discount_amount,event_id,fulfillment_method,delivery_address_mode,delivery_address,delivery_place_name").eq("business_id",a.business_id).eq("customer_id",a.customer_id).in("status",["sent","partial","paid","overdue"]).order("issue_date",{ascending:false}).limit(100);
+  const {data:invoices}=await db.from("invoices").select("id,invoice_number,status,document_type,issue_date,due_date,deposit_required,tax_amount,discount_amount,event_id,fulfillment_method,delivery_address_mode,delivery_address,delivery_place_name,client_order_details").eq("business_id",a.business_id).eq("customer_id",a.customer_id).in("status",["sent","partial","paid","overdue"]).order("issue_date",{ascending:false}).limit(100);
   if(invoices===null)return reply({error:"Unable to load client invoices"},500);
   const ids=(invoices||[]).map(i=>i.id);
   let items=[],payments=[],events=[],messages=[],approvals=[];
@@ -47,7 +47,7 @@ Deno.serve(async req=>{
    approval_terms:business?.client_approval_terms||null,
    review_messages:messages.filter(m=>m.invoice_id===i.id).map(({id,author_role,body,created_at})=>({id,author_role,body,created_at})),
    approval:approvals.find(a=>a.invoice_id===i.id)||null,
-   tax_amount:i.tax_amount,discount_amount:i.discount_amount,
+   tax_amount:i.tax_amount,discount_amount:i.discount_amount,client_order_details:i.client_order_details,
    fulfillment_method:i.fulfillment_method,delivery_place_name:i.delivery_place_name,
    delivery_display_address:i.fulfillment_method==="delivery"?
     (i.delivery_address_mode==="custom"?i.delivery_address:events.find(e=>e.id===i.event_id)?.address||customer.address||null):null,
