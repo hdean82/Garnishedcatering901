@@ -245,6 +245,60 @@ html.garnished-modal-open,body.garnished-modal-open{overflow:hidden;overscroll-b
  #modal #modalBody .invoice-food-grid{grid-template-columns:minmax(0,1fr)}
  #modal #modalBody .invoice-food-grid>div{grid-column:1/-1}
 }
+
+/* Compact mobile team workspace navigation */
+.team-mobile-bar{display:none}
+.team-menu-backdrop[hidden],#garnishedBackToTop[hidden]{display:none!important}
+.garnished-back-to-top{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:8;border:1px solid #c3d1c1;border-radius:100px;background:#315a40;color:#fff;box-shadow:0 5px 20px #1b3b2d38;padding:10px 15px;min-height:44px;font-size:13px;font-weight:650}
+.garnished-back-to-top:focus-visible{outline:3px solid #c5af72;outline-offset:3px}
+.garnished-unscheduled-panel{background:#f9fbf2;border-color:#d6dfc6}
+.unscheduled-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.unscheduled-heading h2{margin:0;font-size:18px}
+.unscheduled-heading span{border-radius:100px;background:#e7f0df;color:#34543c;padding:4px 9px;font-size:11px}
+.unscheduled-booking{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid #e0e8d8;padding:10px 0}
+.unscheduled-booking strong{font-size:14px;color:#31533c}
+.unscheduled-booking .small{font-size:11px;line-height:1.4;margin:3px 0;color:#657767}
+.unscheduled-booking .btn{flex-shrink:0;font-size:12px;padding:8px 11px}
+@media(max-width:760px){
+ #app.wrap{grid-template-columns:minmax(0,1fr);gap:0;padding:7px 10px 35px}
+ #app.wrap main{min-width:0;width:100%}
+ #app .team-mobile-bar{display:flex;align-items:center;gap:9px;padding:6px 9px;min-height:51px;background:#f9fbf7;border:1px solid #dae4d8;border-radius:13px;margin-bottom:8px}
+ #teamMenuToggle{font-weight:700;font-size:13px;white-space:nowrap;border:1px solid #d5e1d4;background:#e9f2e5;color:#315a40;border-radius:10px;min-height:39px;padding:8px 11px}
+ #teamMenuToggle:focus-visible,#app #nav button:focus-visible{outline:3px solid #bba66e;outline-offset:2px}
+ #teamMobileSection{font-size:14px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#31513a}
+ .team-mobile-mark{font-size:9px;letter-spacing:.6px;color:#7c927d;white-space:nowrap}
+ #app .team-menu-backdrop:not([hidden]){display:block;position:fixed;inset:0;background:#162c21a0;z-index:20}
+ #app #nav{display:flex;position:fixed;top:0;left:0;bottom:0;width:min(300px,84vw);height:100dvh;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;gap:2px;white-space:normal;flex-direction:column;padding:calc(24px + env(safe-area-inset-top)) 12px 20px;z-index:21;background:#fcfdf9;box-shadow:15px 0 30px #1d352c33;transform:translateX(-110%);visibility:hidden;transition:transform .2s ease,visibility .2s ease}
+ #app.team-menu-open #nav{transform:translateX(0);visibility:visible}
+ #app #nav::before{content:'GARNISH.ED  /  STUDIO';font:600 13px Georgia,serif;letter-spacing:.7px;color:#35543c;display:block;padding:0 10px 16px;border-bottom:1px solid #e3ebe0;margin-bottom:5px}
+ #app #nav>button[data-view]{display:block;width:100%;font-size:13px;min-height:42px;text-align:left;padding:10px 12px}
+ #app #nav .garnished-board-link{width:100%;margin:8px 0 0;white-space:normal}
+ #app.wrap .panel{padding:12px;margin:8px 0;border-radius:12px}
+ #app.wrap h1{font-size:23px;line-height:1.18;margin:2px 0 6px}
+ #app.wrap h2{font-size:18px;margin-bottom:7px}
+ #app.wrap p{font-size:12px;line-height:1.5;margin-bottom:9px}
+ #app.wrap .item{padding:8px 0;gap:7px;min-width:0}
+ #app.wrap .item>div{min-width:0}
+ #app.wrap .item strong{font-size:12px;margin-bottom:2px;overflow-wrap:anywhere}
+ #app.wrap .muted,#app.wrap .small{font-size:11px;line-height:1.4}
+ #app.wrap .btn{font-size:12px;padding:8px 10px;min-height:36px;border-radius:9px}
+ #app.wrap .cards{gap:7px}
+ #app.wrap .cards .panel{padding:10px}
+ #app.wrap .metric{font-size:22px}
+ #app.wrap .cols{gap:7px}
+ #app.wrap .studio-plan-layout{grid-template-columns:minmax(0,1fr);gap:8px}
+ #app.wrap .studio-week{padding:10px;margin:7px 0;border-radius:12px}
+ #app.wrap .studio-event-row{padding:8px 0;gap:7px}
+ #app.wrap .planner-mode-tabs{margin:6px 0;padding:3px}
+ #app.wrap .planner-mode-tabs button{min-height:36px;font-size:12px}
+ #app.wrap .unscheduled-booking{flex-wrap:wrap}
+ #app.wrap .unscheduled-booking .btn{margin-left:auto}
+}
+@media(max-width:390px){
+ #app .team-mobile-mark{display:none}
+ #app.wrap{padding-inline:8px}
+}
+@media(prefers-reduced-motion:reduce){#app #nav{transition:none}}
 </style></head><body><header><div class="brand" style="display:flex;align-items:center;gap:9px"><img src="data:image/jpeg;base64,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" alt="Garnished Catering 901 logo" style="width:50px;height:50px;object-fit:contain;border-radius:50%" onerror="this.replaceWith(document.createTextNode('GARNISH.ED'))"><div>GARNISH<span class="leaf">.</span>ED<small>catering & events</small></div></div><div class="actions"><nav class="garnished-global-nav" aria-label="Garnished destinations"><a href="/">Home</a><a href="/contact">Plan an event</a><a href="/?client=1">Client</a><a href="/?team=1">Team</a></nav><div class="garnished-social-links garnished-header-social" aria-label="Follow Garnished Catering"><a class="garnished-social-link" href="https://www.instagram.com/garnishedcatering901/" target="_blank" rel="noopener noreferrer" aria-label="Garnished Catering on Instagram" title="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.5" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg></a><a class="garnished-social-link" href="https://www.facebook.com/garnishedcatering901" target="_blank" rel="noopener noreferrer" aria-label="Garnished Catering on Facebook" title="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="currentColor"><path d="M14.2 21v-8.2h2.8l.45-3.3h-3.25V7.4c0-.96.27-1.62 1.64-1.62h1.74V2.82c-.3-.04-1.33-.13-2.53-.13-2.5 0-4.2 1.52-4.2 4.32V9.5H8v3.3h2.85V21z"/></svg></a></div><span id="modeBadge">Garnished Catering</span><button class="btn alt hide" id="signout">Sign out</button></div></header>
 <div id="publicLanding" class="garnished-public" style="display:none">
  <div class="garnished-hero-wrap">
