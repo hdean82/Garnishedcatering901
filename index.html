@@ -1586,6 +1586,7 @@ function openInvoice(id){
   '<button class="btn alt" id="addManyLines" type="button">+ Several items</button>'+
   '<button class="btn alt" id="addPayment" type="button">Payment</button>'+
   '<button class="btn alt" id="printInvoice" type="button">Print / PDF</button>'+
+  (activeBusiness?.owner_id===session?.user?.id&&i.customer_id&&['sent','partial','paid','overdue'].includes(i.status)?'<button class="btn alt" id="invoiceSendPortalEmail" type="button">Email client portal link</button>':'')+
   (i.status==='draft'?'<button class="btn alt" type="button" id="publishClientInvoice">Make visible to client</button>':'')+
   '<button class="btn alt" id="closeInvoice" type="button">Close</button></div>'+
   (i.status==='draft'?'<p class="compact-invoice-private">Private draft. Client cannot see this invoice until you choose Make visible to client.</p>':'')+
@@ -1597,6 +1598,7 @@ function openInvoice(id){
  $('addManyLines').onclick=()=>addSeveralInvoiceLines(id);
  $('addPayment').onclick=()=>recordPayment(id);
  $('printInvoice').onclick=()=>previewInvoice(id);
+ if($('invoiceSendPortalEmail'))$('invoiceSendPortalEmail').onclick=()=>emailInvoicePortalInvite(id);
  if($('publishClientInvoice'))$('publishClientInvoice').onclick=async()=>{
    if(!i.customer_id)return toast('Select a customer before making this invoice visible');
    if(!items.length)return toast('Add at least one food or service item first');
