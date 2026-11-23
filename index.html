@@ -1933,7 +1933,7 @@ function openInvoice(id){
  $('addPayment').onclick=()=>recordPayment(id);
  $('printInvoice').onclick=()=>previewInvoice(id);
  $('invoiceDirectPrint').onclick=()=>printInvoice(id);
- if($('invoiceSendPortalEmail'))$('invoiceSendPortalEmail').onclick=()=>shareAndEmailInvoice(id);
+ if($('invoiceSendPortalEmail'))$('invoiceSendPortalEmail').onclick=()=>emailInvoicePortalInvite(id,true);
  if($('publishClientInvoice'))$('publishClientInvoice').onclick=async()=>{
    if(!i.customer_id)return toast('Select a customer before making this invoice visible');
    if(!items.length)return toast('Add at least one food or service item first');
@@ -2235,31 +2235,27 @@ function openTeamReview(id){
   }catch(err){btn.disabled=false;toast('Could not save reply: '+err.message)}
  };
 }
-async function shareAndEmailInvoice(id){
- const invoice=state.invoices.find(x=>x.id===id),customer=state.customers.find(x=>x.id===invoice?.customer_id);
- if(!invoice||!customer?.email)return toast('Add the customer email address first');
- if(!state.invoice_items.some(it=>it.invoice_id===id))return toast('Add at least one invoice line first');
- if(activeBusiness?.owner_id!==session?.user?.id)return toast('Only the owner can send client invitations');
- if(!confirm((invoice.status==='draft'?'Make this document visible and ':'')+'send a secure client portal email to '+customer.email+'?'))return;
- if(invoice.status==='draft'){
-  try{await update('invoices',id,{status:'sent'})}catch(err){return toast('Cannot share invoice: '+err.message)}
- }
- await emailInvoicePortalInvite(id,true);
-}
-async function emailInvoicePortalInvite(invoiceId,skipConfirm=false){
+const pendingInvoiceInvitations=new Set();
+async function emailInvoicePortalInvite(invoiceId,publishDraft=false){
+ if(pendingInvoiceInvitations.has(invoiceId))return;
  const invoice=state.invoices.find(i=>i.id===invoiceId),customer=state.customers.find(c=>c.id===invoice?.customer_id);
  if(!invoice||!customer?.email)return toast('The customer needs a saved email address');
  if(activeBusiness?.owner_id!==session?.user?.id)return toast('Only the owner can send access invitations');
- if(!['sent','partial','paid','overdue'].includes(invoice.status))return toast('Make the invoice visible to the customer first');
- if(!skipConfirm&&!confirm('Email a private client-portal invitation to '+customer.email+' for '+(invoice.document_type==='quote'?'quote ':'invoice ')+invoice.invoice_number+'? This sends an actual email, not a test.'))return;
- const btn=$('reviewEmailInvite');if(btn)btn.disabled=true;
+ const sharingDraft=publishDraft&&invoice.status==='draft';
+ if(publishDraft&&!state.invoice_items.some(item=>item.invoice_id===invoiceId))return toast('Add at least one invoice line first');
+ if(!sharingDraft&&!['sent','partial','paid','overdue'].includes(invoice.status))return toast('Make the invoice visible to the customer first');
+ if(!confirm((sharingDraft?'Make this document visible and email':'Email')+' a private client-portal invitation to '+customer.email+' for '+(invoice.document_type==='quote'?'quote ':'invoice ')+invoice.invoice_number+'? This sends an actual email, not a test.'))return;
+ const button=$(publishDraft?'invoiceSendPortalEmail':'reviewEmailInvite');
+ pendingInvoiceInvitations.add(invoiceId);
+ if(button)button.disabled=true;
  try{
+  if(sharingDraft)await update('invoices',invoiceId,{status:'sent'});
   const response=await fetch(SUPABASE_API_URL+'/functions/v1/send-garnished-client-invite',{method:'POST',headers:authHeader(),body:JSON.stringify({customer_id:customer.id,business_id:businessId,invoice_id:invoice.id})});
   const result=await response.json().catch(()=>({}));
   if(!response.ok)throw Error(result.error||'Invitation failed');
   toast(result.manual?'No email sent. Use Team access to copy the private portal link.':'Client portal invitation accepted for email delivery');
  }catch(err){toast('Could not send invitation: '+err.message)}
- finally{if(btn)btn.disabled=false}
+ finally{pendingInvoiceInvitations.delete(invoiceId);if(button)button.disabled=false}
 }
 function clientReviewActionButtons(i){
  if(i.approval)return '<div class="garnished-client-review"><p class="garnished-review-confirmed">Approved '+esc(new Date(i.approval.approved_at).toLocaleString())+' · The accepted document and terms were saved at approval; later edits are not covered.</p>'+
