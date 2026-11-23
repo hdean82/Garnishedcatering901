@@ -1350,7 +1350,10 @@ function scheduleEventFromCalendar(id){
  openModal('Schedule '+event.title,'<p class="small">Use the confirmed service date and time, not the invoice due date.</p><form id="scheduleEventForm"><label for="scheduleEventTime">Event date and time ('+esc(activeBusiness?.timezone||'America/Chicago')+')</label><input id="scheduleEventTime" type="datetime-local" required><div class="actions"><button class="btn" id="saveEventDate" type="submit">Save date</button><button class="btn alt" id="cancelEventDate" type="button">Cancel</button></div></form>');
  $('cancelEventDate').onclick=closeModal;
  $('scheduleEventForm').onsubmit=async ev=>{ev.preventDefault();const value=$('scheduleEventTime').value;if(!value)return;const button=$('saveEventDate');button.disabled=true;
-  try{await req('/rest/v1/events?id=eq.'+encodeURIComponent(id)+'&business_id=eq.'+encodeURIComponent(businessId),'PATCH',{event_at:datetime(value)});closeModal();view='planner';plannerMode='calendar';await load();toast('Event scheduled')}
+  try{await req('/rest/v1/events?id=eq.'+encodeURIComponent(id)+'&business_id=eq.'+encodeURIComponent(businessId),'PATCH',{event_at:datetime(value)});
+   selectedCalendarDate=value.slice(0,10);
+   calendarCursor=new Date(selectedCalendarDate+'T12:00:00');
+   closeModal();view='planner';plannerMode='calendar';await load();toast('Event scheduled')}
   catch(err){button.disabled=false;toast('Could not schedule: '+err.message)}
  };
 }
