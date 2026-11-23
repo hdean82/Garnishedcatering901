@@ -725,6 +725,25 @@ function person(id){return state.customers.find(x=>x.id===id)?.name||'Unassigned
  else if(open===false&&document.activeElement?.closest?.('#nav'))toggle?.focus({preventScroll:true});
 }
 
+let clientMessageRefreshBusy=false;
+async function pollClientMessageBell(){
+ if(clientMessageRefreshBusy||!TEAM_MODE||!session?.access_token||!businessId||document.hidden)return;
+ clientMessageRefreshBusy=true;
+ try{
+  const scope='&business_id=eq.'+encodeURIComponent(businessId);
+  const [messages,approvals,reads]=await Promise.all([
+   req('/rest/v1/garnished_client_review_messages?select=*&order=created_at.asc'+scope),
+   req('/rest/v1/garnished_client_approvals?select=*&order=approved_at.desc'+scope),
+   req('/rest/v1/garnished_client_message_reads?select=*&order=last_read_at.desc'+scope)
+  ]);
+  state.garnished_client_review_messages=messages;
+  state.garnished_client_approvals=approvals;
+  state.garnished_client_message_reads=reads;
+  refreshClientMessageBell();
+ }catch(err){/* avoid interrupting an open form if a refresh fails */}finally{clientMessageRefreshBusy=false}
+}
+setInterval(pollClientMessageBell,60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollClientMessageBell()});
 function activeClientMessageThreads(){
  const approvals=new Set((state.garnished_client_approvals||[]).map(a=>a.invoice_id));
  const messages=(state.garnished_client_review_messages||[]).filter(m=>m.author_role==='client');
