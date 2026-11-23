@@ -853,13 +853,13 @@ function reminderCenter(){
 }
 
 function dashboard(){
-const upcoming=state.events.filter(e=>e.event_at&&new Date(e.event_at)>new Date()&&e.status!=='cancelled').sort((a,b)=>new Date(a.event_at)-new Date(b.event_at)).slice(0,4);
-const overdue=state.tasks.filter(t=>t.status!=='done'&&t.due_at&&new Date(t.due_at)<new Date());const todo=state.tasks.filter(t=>t.status!=='done').sort((a,b)=>new Date(a.due_at||'9999')-new Date(b.due_at||'9999')).slice(0,5);
+const upcoming=state.events.filter(e=>e.event_at&&new Date(e.event_at)>new Date()&&e.status!=='cancelled').sort((a,b)=>new Date(a.event_at)-new Date(b.event_at));
+const overdue=state.tasks.filter(t=>t.status!=='done'&&t.due_at&&new Date(t.due_at)<new Date());const todo=state.tasks.filter(t=>t.status!=='done').sort((a,b)=>new Date(a.due_at||'9999')-new Date(b.due_at||'9999'));
 const due=state.invoices.filter(i=>i.document_type!=='quote'&&i.status!=='void'&&invoiceTotal(i.id)>invoicePaid(i.id));
 const latestDraft=[...state.invoices].filter(i=>i.status==='draft').sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')))[0];
 const remaining=due.reduce((sum,i)=>sum+Math.max(0,invoiceTotal(i.id)-invoicePaid(i.id)),0);
-const eventRows=upcoming.map(e=>`<div class="item"><div><strong>${esc(e.title)}</strong><span class="muted">${fmt(e.event_at)} · ${esc(e.venue||'Venue TBD')}</span></div><span class="pill">${esc(displayStatus(e.status))}</span></div>`).join('');
-const taskRows=todo.map(t=>`<div class="item"><div><strong>${esc(t.title)}</strong><span class="muted">${fmt(t.due_at)} · ${esc(t.priority)}</span></div><button class="btn alt" data-done="tasks" data-id="${t.id}">Done</button></div>`).join('');
+const eventRows=upcoming.slice(0,4).map(e=>`<div class="item"><div><strong>${esc(e.title)}</strong><span class="muted">${fmt(e.event_at)} · ${esc(e.venue||'Venue TBD')}</span></div><span class="pill">${esc(displayStatus(e.status))}</span></div>`).join('');
+const taskRows=todo.slice(0,5).map(t=>`<div class="item"><div><strong>${esc(t.title)}</strong><span class="muted">${fmt(t.due_at)} · ${esc(t.priority)}</span></div><button class="btn alt" data-done="tasks" data-id="${t.id}">Done</button></div>`).join('');
 return header('Good to have it all in one place','Your Garnished Catering command center')+`<section class="studio-quick-actions" aria-label="Quick actions"><button class="btn" data-quick-new="invoices">+ New invoice</button><button class="btn alt" data-quick-new="events">+ Catering event</button><button class="btn alt" data-quick-new="customers">+ Customer</button><button class="btn alt" data-quick-shopping="1">+ Shopping items</button>${latestDraft?`<button class="btn alt" data-quick-draft="${esc(latestDraft.id)}">Continue draft ${esc(latestDraft.invoice_number)}</button>`:''}</section>`+
 `<div class="cards"><div class="panel"><div class="muted">Upcoming events</div><div class="metric">${upcoming.length}</div></div><div class="panel"><div class="muted">Open tasks</div><div class="metric">${todo.length}</div></div><div class="panel"><div class="muted">Unpaid invoices</div><div class="metric">${due.length}</div></div><div class="panel"><div class="muted">Outstanding</div><div class="metric" style="font-size:22px">${money(remaining)}</div></div></div>`+
 reminderCenter()+unscheduledBookingPanel()+miniCalendar()+`<div class="cols"><div class="panel"><h2>Next catering events</h2>${eventRows||'<div class="empty">No upcoming events yet</div>'}<button class="btn alt" onclick="view='planner';plannerMode='calendar';render()">View schedule</button></div><div class="panel"><h2>What needs doing</h2>${taskRows||'<div class="empty">You are caught up on tasks</div>'}<button class="btn alt" onclick="view='tasks';render()">All tasks</button></div></div>`+
@@ -946,7 +946,7 @@ function calendarGrid(compact=false){
  return '<div class="calendar-top"><h2>'+first.toLocaleDateString(undefined,{month:'long',year:'numeric'})+'</h2><div class="actions"><button class="btn alt" data-cal-step="-1" aria-label="Previous month">‹</button><button class="btn alt" data-cal-step="1" aria-label="Next month">›</button></div></div><div class="calendar-grid'+(compact?' compact':'')+'">'+weekdays+cells+'</div>';
 }
 function miniCalendar(){
- const start=new Date();start.setHours(12,0,0,0);
+ const now=new Date(),start=new Date(now);start.setHours(12,0,0,0);
  const days=Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d});
  const badges=days.map(d=>{
   const key=dateKey(d),events=state.events.filter(e=>e.event_at&&e.status!=='cancelled'&&dateKey(e.event_at)===key);
@@ -955,13 +955,13 @@ function miniCalendar(){
    '<span>'+d.toLocaleDateString(undefined,{weekday:'short'})+'</span><strong>'+d.getDate()+'</strong>'+
    (events.length||tasks.length?'<i class="week-dot"></i>':'<i class="week-dot empty"></i>')+'</button>';
  }).join('');
- const next=state.events.filter(e=>e.event_at&&e.status!=='cancelled'&&new Date(e.event_at)>=start).sort((a,b)=>new Date(a.event_at)-new Date(b.event_at))[0];
+ const next=state.events.filter(e=>e.event_at&&e.status!=='cancelled'&&new Date(e.event_at)>=now).sort((a,b)=>new Date(a.event_at)-new Date(b.event_at))[0];
  return '<section class="studio-week"><div class="studio-week-head"><div><strong>Upcoming week</strong><span>Bookings & to-dos at a glance</span></div><button class="btn alt" type="button" onclick="view=\'planner\';plannerMode=\'calendar\';render()">Full planner</button></div>'+
  '<div class="studio-weekstrip">'+badges+'</div>'+
  (next?'<p class="small studio-next-event"><strong>Next event:</strong> '+esc(calendarCustomerName(next))+' · '+esc(next.title)+' · '+fmt(next.event_at)+'</p>':'<p class="small studio-next-event">No upcoming catering events</p>')+'</section>';
 }
 function calendarPage(){
- const day=selectedCalendarDate||dateKey(new Date()),events=state.events.filter(e=>dateKey(e.event_at)===day),tasks=state.tasks.filter(t=>dateKey(t.due_at)===day);
+ const day=selectedCalendarDate||dateKey(new Date()),events=state.events.filter(e=>e.status!=='cancelled'&&dateKey(e.event_at)===day),tasks=state.tasks.filter(t=>dateKey(t.due_at)===day);
  return header('Catering calendar','See shared bookings and task due dates','events')+
  '<div class="panel">'+calendarGrid()+'</div><div class="panel"><h2>'+esc(day)+'</h2>'+
  (events.map(e=>'<div class="item"><div><strong>'+esc(e.title)+'</strong><div class="muted">'+fmt(e.event_at)+' · '+esc(e.venue||'Venue TBD')+' · '+esc(displayStatus(e.status))+'</div></div><button class="btn alt" data-cal-event="'+esc(e.id)+'">Open prep</button></div>').join('')||'<p class="muted">No catering events this day.</p>')+
@@ -1289,7 +1289,7 @@ function planner(){
   '<button type="button" class="'+(plannerMode==='prep'?'selected':'')+'" data-planner-mode="prep">Prep checklist</button></div>';
  const head=header('Schedule & Prep','One place for bookings, shopping, and event preparation','events')+tabs;
  if(plannerMode==='prep')return head+prepOverview();
- const day=selectedCalendarDate||dateKey(new Date()),events=state.events.filter(e=>dateKey(e.event_at)===day),tasks=state.tasks.filter(t=>dateKey(t.due_at)===day);
+ const day=selectedCalendarDate||dateKey(new Date()),events=state.events.filter(e=>e.status!=='cancelled'&&dateKey(e.event_at)===day),tasks=state.tasks.filter(t=>dateKey(t.due_at)===day);
  const upcoming=state.events.filter(e=>e.event_at&&e.status!=='cancelled').sort((a,b)=>new Date(a.event_at)-new Date(b.event_at)).slice(0,7);
  const upcomingRows=upcoming.map(e=>{
   const totalTasks=state.tasks.filter(t=>t.event_id===e.id),done=totalTasks.filter(t=>t.status==='done').length;
@@ -1986,6 +1986,7 @@ function recordPayment(id){
 }
 function printInvoice(id,openPrinter=true){
  const i=state.invoices.find(x=>x.id===id);if(!i)return;
+ const isQuote=i.document_type==='quote';
  const items=state.invoice_items.filter(x=>x.invoice_id===id).sort((a,b)=>Number(a.position||0)-Number(b.position||0));
  const customer=state.customers.find(x=>x.id===i.customer_id),event=state.events.find(x=>x.id===i.event_id);
  const subtotal=items.reduce((n,x)=>n+Number(x.quantity)*Number(x.unit_price),0),paid=invoicePaid(id),total=invoiceTotal(id),due=Math.max(0,total-paid);
@@ -1995,13 +1996,13 @@ function printInvoice(id,openPrinter=true){
  $('invoicePrint').innerHTML='<article class="garnished-invoice-document">'+
  '<div class="garnished-invoice-document-head">'+
  '<div class="garnished-invoice-document-brand"><img src="/assets/garnished-circle-transparent.png" width="49" height="49" alt="Garnished Catering"><div><strong>GARNISH.ED</strong><small>CATERING & EVENTS</small></div></div>'+
- '<div class="garnished-invoice-document-number"><h1>'+esc(i.document_type==='quote'?'QUOTE':'INVOICE')+'</h1><strong>'+esc(i.invoice_number)+'</strong><small>'+esc(displayStatus(i.status))+'</small></div></div>'+
+ '<div class="garnished-invoice-document-number"><h1>'+(isQuote?'QUOTE':'INVOICE')+'</h1><strong>'+esc(i.invoice_number)+'</strong><small>'+esc(displayStatus(i.status))+'</small></div></div>'+
  '<div class="garnished-invoice-document-meta"><section><h2>BILL TO</h2><strong>'+esc(customer?.company_name||customer?.name||'Customer not linked')+'</strong>'+
  (customer?.company_name&&customer?.name?'<div>'+esc(customer.name)+'</div>':'')+
  (customer?.billing_address||customer?.address?'<div>'+esc(customer.billing_address||customer.address)+'</div>':'')+
  (customer?.email?'<div>'+esc(customer.email)+'</div>':'')+
  (customer?.phone?'<div>'+esc(customer.phone)+'</div>':'')+
- '</section><section><h2>INVOICE INFORMATION</h2>'+row('Issued',fmt(i.issue_date))+row('Due',fmt(i.due_date))+
+ '</section><section><h2>'+(isQuote?'QUOTE':'INVOICE')+' INFORMATION</h2>'+row('Issued',fmt(i.issue_date))+row('Due',fmt(i.due_date))+
  (i.reference_number?row('Reference',i.reference_number):'')+
  (event?row('Event',event.title):'')+
  '</section></div>'+
@@ -2011,8 +2012,8 @@ function printInvoice(id,openPrinter=true){
  '</tbody></table></div>'+
  '<div class="garnished-invoice-document-summary">'+
  row('Subtotal',money(subtotal))+row('Discount','-'+money(i.discount_amount))+row('Tax',money(i.tax_amount))+
- '<div class="garnished-invoice-document-total"><span>Total</span><strong>'+money(total)+'</strong></div>'+
- row('Payments received','-'+money(paid))+row('Balance due',money(due))+
+ '<div class="garnished-invoice-document-total"><span>'+(isQuote?'Estimated total':'Total')+'</span><strong>'+money(total)+'</strong></div>'+
+ (isQuote?'':row('Payments received','-'+money(paid))+row('Balance due',money(due)))+
  (Number(i.deposit_required)>0?row('Deposit requested',money(i.deposit_required)):'')+'</div>'+
  (payments.length?'<section class="garnished-invoice-document-details"><h2>PAYMENT HISTORY</h2>'+payments.map(p=>'<p>'+fmt(p.paid_at)+' · '+esc(p.method||'Payment')+' · '+money(p.amount)+'</p>').join('')+'</section>':'')+
  (orderDetails?'<section class="garnished-invoice-document-details"><h2>ORDER DETAILS</h2><p>'+esc(orderDetails)+'</p></section>':'')+
