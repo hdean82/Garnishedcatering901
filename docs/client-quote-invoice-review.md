@@ -4,9 +4,10 @@
 - Single compact botanical Garnished logo (49px), correctly sized wordmark.
 - Four concise columns: Description, Qty, Unit Price, Amount.
 - One lightweight divider between food rows, smaller padding.
-- Client, dates, fulfillment, totals, and a single **Order Details** section. The editable Order Details field maps to `invoices.notes`.
-- Historical `event_service_notes` data is retained in the database and shown in Order Details only when `notes` is empty, so old information is not silently deleted.
+- Quotes and invoices use **Order details for the customer** for the portal, the Studio print preview, and PDFs printed from either location. An empty field omits the section.
+- **Studio notes (team only)** holds the inquiry details. Older service notes remain readable in the Studio editor. Neither field is copied into new approval snapshots.
 - Existing payment terms and payment methods remain separate from Order Details.
+- Deploy this change in order. Apply the `garnished_customer_order_details` migration, deploy the `garnished-client-portal-data` Edge Function using its existing settings, then release the website.
 - The same template supports PDF print and team preview, including the quote/invoice distinction.
 
 ## Customer portal and email access
