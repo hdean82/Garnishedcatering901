@@ -20,16 +20,20 @@ Deno.serve(async req=>{
  for(const a of access){
   const {data:customer}=await db.from("customers").select("id,name,company_name,address").eq("id",a.customer_id).eq("business_id",a.business_id).maybeSingle();
   if(!customer)continue;
-  const {data:business}=await db.from("businesses").select("name,phone,email").eq("id",a.business_id).maybeSingle();
+  const {data:business}=await db.from("businesses").select("name,phone,email,client_approval_terms").eq("id",a.business_id).maybeSingle();
   const {data:invoices}=await db.from("invoices").select("id,invoice_number,status,issue_date,due_date,deposit_required,tax_amount,discount_amount,event_id,fulfillment_method,delivery_address_mode,delivery_address,delivery_place_name").eq("business_id",a.business_id).eq("customer_id",a.customer_id).in("status",["sent","partial","paid","overdue"]).order("issue_date",{ascending:false}).limit(100);
   if(invoices===null)return reply({error:"Unable to load client invoices"},500);
   const ids=(invoices||[]).map(i=>i.id);
-  let items=[],payments=[],events=[];
+  let items=[],payments=[],events=[],messages=[],approvals=[];
   if(ids.length){
    const ir=await db.from("invoice_items").select("invoice_id,item_category,description,quantity,unit_price,position").eq("business_id",a.business_id).in("invoice_id",ids).order("position",{ascending:true});
    const pr=await db.from("payments").select("invoice_id,amount,paid_at,method").eq("business_id",a.business_id).in("invoice_id",ids);
    if(ir.error||pr.error)return reply({error:"Unable to load invoice details"},500);
    items=ir.data||[];payments=pr.data||[];
+   const mr=await db.from("garnished_client_review_messages").select("id,invoice_id,author_role,body,created_at").eq("business_id",a.business_id).eq("customer_id",a.customer_id).in("invoice_id",ids).order("created_at",{ascending:true}).limit(300);
+   const ar=await db.from("garnished_client_approvals").select("id,invoice_id,approved_at,approved_email,terms_snapshot").eq("business_id",a.business_id).eq("customer_id",a.customer_id).in("invoice_id",ids);
+   if(mr.error||ar.error)return reply({error:"Unable to load review history"},500);
+   messages=mr.data||[];approvals=ar.data||[];
    const eventIds=[...new Set((invoices||[]).map(i=>i.event_id).filter(Boolean))];
    if(eventIds.length){
     const result=await db.from("events").select("id,address").eq("business_id",a.business_id).in("id",eventIds);
@@ -38,7 +42,11 @@ Deno.serve(async req=>{
    }
   }
   accounts.push({customer:{name:customer.name,company_name:customer.company_name},business:business||{name:"Garnished Catering"},invoices:(invoices||[]).map(i=>({
+   id:i.id,business_id:a.business_id,customer_id:a.customer_id,
    invoice_number:i.invoice_number,status:i.status,issue_date:i.issue_date,due_date:i.due_date,deposit_required:i.deposit_required,
+   approval_terms:business?.client_approval_terms||null,
+   review_messages:messages.filter(m=>m.invoice_id===i.id).map(({id,author_role,body,created_at})=>({id,author_role,body,created_at})),
+   approval:approvals.find(a=>a.invoice_id===i.id)||null,
    tax_amount:i.tax_amount,discount_amount:i.discount_amount,
    fulfillment_method:i.fulfillment_method,delivery_place_name:i.delivery_place_name,
    delivery_display_address:i.fulfillment_method==="delivery"?
