@@ -19,6 +19,13 @@ Deno.serve(async req=>{
  if(!business||business.owner_id!==user.id)return reply({error:"Only the workspace owner can invite customers"},403);
  const {data:customer}=await db.from("customers").select("id,name,email").eq("id",customerId).eq("business_id",businessId).maybeSingle();
  if(!customer)return reply({error:"Customer not found"},404);
+ const documentId=String(input.invoice_id||"");let linkedDocument=null;
+ if(documentId){
+  if(!/^[0-9a-f-]{36}$/i.test(documentId))return reply({error:"Invalid document"},400);
+  const result=await db.from("invoices").select("id,invoice_number,document_type,status").eq("id",documentId).eq("business_id",businessId).eq("customer_id",customerId).maybeSingle();
+  if(result.error||!result.data||!["sent","partial","paid","overdue"].includes(result.data.status))return reply({error:"The quote or invoice must be shared with this customer first"},400);
+  linkedDocument=result.data;
+ }
  const email=String(customer.email||"").trim().toLowerCase();
  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return reply({error:"Add a valid customer email in their profile first"},400);
  const {data:pending,error:pendingError}=await db.from("garnished_client_invites").select("id").eq("business_id",businessId).eq("customer_id",customerId).eq("recipient_email",email).is("claimed_at",null).gt("expires_at",new Date().toISOString()).limit(1);
@@ -29,12 +36,14 @@ Deno.serve(async req=>{
  if((count||0)>=15)return reply({error:"Daily client invitation limit reached"},429);
  const {data:invite,error:insertError}=await db.from("garnished_client_invites").insert({business_id:businessId,customer_id:customerId,recipient_email:email,created_by:user.id}).select("id,code").single();
  if(insertError||!invite)return reply({error:"Could not create customer invitation"},500);
- const link=origin+"/?client=1&invite="+encodeURIComponent(invite.code);
+ const link=origin+"/?client=1&show=invoices&invite="+encodeURIComponent(invite.code);
+ const documentLabel=linkedDocument?.document_type==="quote"?"quote":"invoice";
+ const documentTitle=linkedDocument?documentLabel+" "+linkedDocument.invoice_number:null;
  let delivery="manual",warning="Invitation email not delivered. Copy the invitation link from Client Access.";
  const resendKey=Deno.env.get("RESEND_API_KEY"),fromEmail=Deno.env.get("GARNISHED_FROM_EMAIL");
  if(resendKey&&fromEmail){
   const safeName=business.name.replace(/[<>&"']/g,"");
-  const content={from:fromEmail,to:[email],subject:"Your Garnished Catering client account",html:`<div style="background:#f5f6f1;padding:24px;font-family:Arial,sans-serif;color:#25382d"><div style="max-width:540px;margin:auto;background:white;padding:32px;border:1px solid #dce6dd;border-radius:12px"><h2 style="font-family:Georgia,serif">GARNISH.ED</h2><p>${safeName} has invited you to privately view invoices for your own customer account.</p><p><a style="display:inline-block;background:#315a40;padding:13px 20px;color:white;border-radius:8px;text-decoration:none" href="${link}">Open my client account</a></p><small>This private invitation expires in seven days. Check Spam or Junk if you don't see our emails.</small></div></div>`};
+  const content={from:fromEmail,to:[email],subject:documentTitle?"Your Garnished Catering "+documentTitle:"Your Garnished Catering client account",html:`<div style="background:#f5f6f1;padding:24px;font-family:Arial,sans-serif;color:#25382d"><div style="max-width:540px;margin:auto;background:white;padding:32px;border:1px solid #dce6dd;border-radius:12px"><h2 style="font-family:Georgia,serif">GARNISH.ED</h2><p>${safeName} has invited you to privately review ${documentTitle||"your catering documents"} in your own secure customer account. You can request changes or approve after reading the terms.</p><p><a style="display:inline-block;background:#315a40;padding:13px 20px;color:white;border-radius:8px;text-decoration:none" href="${link}">Open my client account</a></p><small>This private invitation expires in seven days. Check Spam or Junk if you don't see our emails.</small></div></div>`};
   try{const r=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+resendKey,"Content-Type":"application/json"},body:JSON.stringify(content)});if(r.ok){delivery="resend";warning=""}}catch{}
  }else{
   const {error}=await db.auth.admin.inviteUserByEmail(email,{redirectTo:link});
