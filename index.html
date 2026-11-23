@@ -1844,7 +1844,7 @@ async function acceptClientInvite(){
   toast('Client account connected');
  }catch(err){toast('Client invitation: '+err.message)}
 }
-let clientPortalTab='home',clientPortalAccounts=[];
+let clientPortalTab=new URLSearchParams(location.search).get('show')==='invoices'?'invoices':'home',clientPortalAccounts=[];
 
 function teamReviewPage(){
  const invoices=(state.invoices||[]).filter(i=>['sent','partial','paid','overdue'].includes(i.status));
@@ -1892,10 +1892,10 @@ async function emailInvoicePortalInvite(invoiceId){
  if(!invoice||!customer?.email)return toast('The customer needs a saved email address');
  if(activeBusiness?.owner_id!==session?.user?.id)return toast('Only the owner can send access invitations');
  if(!['sent','partial','paid','overdue'].includes(invoice.status))return toast('Make the invoice visible to the customer first');
- if(!confirm('Email a private client-portal invitation to '+customer.email+' for invoice '+invoice.invoice_number+'? This sends an actual email, not a test.'))return;
+ if(!confirm('Email a private client-portal invitation to '+customer.email+' for '+(invoice.document_type==='quote'?'quote ':'invoice ')+invoice.invoice_number+'? This sends an actual email, not a test.'))return;
  const btn=$('reviewEmailInvite');if(btn)btn.disabled=true;
  try{
-  const response=await fetch(SUPABASE_API_URL+'/functions/v1/send-garnished-client-invite',{method:'POST',headers:authHeader(),body:JSON.stringify({customer_id:customer.id,business_id:businessId})});
+  const response=await fetch(SUPABASE_API_URL+'/functions/v1/send-garnished-client-invite',{method:'POST',headers:authHeader(),body:JSON.stringify({customer_id:customer.id,business_id:businessId,invoice_id:invoice.id})});
   const result=await response.json().catch(()=>({}));
   if(!response.ok)throw Error(result.error||'Invitation failed');
   toast(result.manual?'No email sent. Use Team access to copy the private portal link.':'Client portal invitation accepted for email delivery');
@@ -1903,7 +1903,9 @@ async function emailInvoicePortalInvite(invoiceId){
  finally{if(btn)btn.disabled=false}
 }
 function clientReviewActionButtons(i){
- if(i.approval)return '<p class="garnished-review-confirmed">Approved '+esc(new Date(i.approval.approved_at).toLocaleString())+' · A copy of the terms was saved with the approval.</p>';
+ if(i.approval)return '<div class="garnished-client-review"><p class="garnished-review-confirmed">Approved '+esc(new Date(i.approval.approved_at).toLocaleString())+' · The accepted document and terms were saved at approval; later edits are not covered.</p>'+
+ '<form data-client-message="'+esc(i.id)+'"><label for="clientReview_'+esc(i.id)+'">Ask a question or request a follow-up</label><textarea id="clientReview_'+esc(i.id)+'" maxlength="2000" required rows="3"></textarea><button type="submit" class="btn alt">Send to Garnished</button></form>'+
+ (i.review_messages||[]).map(m=>'<div class="garnished-review-history"><strong>'+esc(m.author_role==='team'?'Garnished':'You')+'</strong><p>'+esc(m.body)+'</p></div>').join('')+'</div>';
  const canApprove=['sent','partial','overdue'].includes(i.status);
  const terms=String(i.approval_terms||'').trim();
  return '<section class="garnished-client-review"><h3>Review & approval</h3>'+
@@ -2004,7 +2006,7 @@ function clientPortalHtml(accounts){
  const all=accounts.flatMap(account=>(account.invoices||[]).map(i=>({account,invoice:i})));
  const unpaid=all.reduce((sum,x)=>sum+(x.invoice.document_type==='quote'?0:clientInvoiceFigures(x.invoice).balance),0);
  const customer=accounts[0]?.customer;
- const tabs=[['home','Home'],['account','My account'],['invoices','Invoices']].map(([id,label])=>
+ const tabs=[['home','Home'],['account','My account'],['invoices','Quotes & Invoices']].map(([id,label])=>
   '<button type="button" class="'+(clientPortalTab===id?'selected':'')+'" data-client-tab="'+id+'">'+label+'</button>').join('');
  let html='<div class="client-only"><div class="client-nav"><a class="garnished-client-brand" href="/"><img src="/assets/garnished-circle-transparent.png" alt="Garnished Catering" width="42" height="42"><span>GARNISH.ED <small>Client Portal</small></span></a><nav aria-label="Client pages">'+tabs+'</nav></div>';
  if(clientPortalTab==='home'){
@@ -2031,8 +2033,8 @@ function clientPortalHtml(accounts){
   html+='</section>'+personalAccountSettings();
  }
  if(clientPortalTab==='invoices'){
-  html+='<section class="panel"><div class="actions" style="justify-content:space-between;align-items:center"><h1>My invoices</h1><button class="btn alt" id="clientPortalRefresh" type="button">Refresh</button></div>';
-  if(!all.length)html+='<p>No invoices are available for your account yet.</p>';
+  html+='<section class="panel"><div class="actions" style="justify-content:space-between;align-items:center"><h1>My quotes & invoices</h1><button class="btn alt" id="clientPortalRefresh" type="button">Refresh</button></div>';
+  if(!all.length)html+='<p>No quotes or invoices are available for your account yet.</p>';
   for(const [invoiceIndex,{invoice:i}] of all.entries()){
    const {subtotal,total,paid,balance}=clientInvoiceFigures(i);
    html+='<article class="client-invoice" data-client-invoice-card="'+invoiceIndex+'"><div class="actions" style="justify-content:space-between;align-items:center"><h2>'+esc(i.document_type==='quote'?'Quote ':'Invoice ')+esc(i.invoice_number)+'</h2><span class="pill">'+esc(displayStatus(i.status))+'</span></div>'+
