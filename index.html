@@ -308,6 +308,52 @@ html.garnished-modal-open,body.garnished-modal-open{overflow:hidden;overscroll-b
 .invoice-fulfillment select,.invoice-fulfillment input,.invoice-fulfillment textarea{width:100%;max-width:100%;box-sizing:border-box}
 .invoice-fulfillment #invoiceDeliveryControls[hidden],.invoice-fulfillment #invoiceCustomAddress[hidden]{display:none!important}
 @media(max-width:700px){.invoice-fulfillment{padding:9px;margin-top:5px}}
+
+/* Compact, readable Garnished invoice (shared by team preview and print) */
+.garnished-invoice-document{max-width:780px;margin:0 auto;background:white;color:#26352b;font:12px/1.45 Inter,system-ui,sans-serif;box-sizing:border-box}
+.garnished-invoice-document *{box-sizing:border-box}
+.garnished-invoice-document-head{display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:2px solid #47654b;padding:0 0 10px}
+.garnished-invoice-document-brand{display:flex;align-items:center;gap:9px;min-width:0}
+.garnished-invoice-document-brand img{width:49px;height:49px;object-fit:contain;flex:none}
+.garnished-invoice-document-brand strong{display:block;white-space:nowrap;font:600 clamp(16px,2.3vw,24px)/1.1 Georgia,serif;letter-spacing:.6px}
+.garnished-invoice-document-brand small{display:block;font-size:9px;color:#5e7865;letter-spacing:1.5px;white-space:nowrap;margin-top:3px}
+.garnished-invoice-document-number{text-align:right;flex:none}
+.garnished-invoice-document-number h1{font:600 18px Georgia,serif;margin:0 0 2px;letter-spacing:1px}
+.garnished-invoice-document-number strong{display:block;font-size:11px}
+.garnished-invoice-document-number small{font-size:9px;color:#607c64}
+.garnished-invoice-document-meta{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;padding:12px 0}
+.garnished-invoice-document-meta section{font-size:11px;line-height:1.5;min-width:0;overflow-wrap:anywhere}
+.garnished-invoice-document-meta h2,.garnished-invoice-document-details h2{font:700 10px Inter,system-ui,sans-serif;letter-spacing:1px;color:#476b50;margin:0 0 5px}
+.garnished-invoice-document-meta section>strong{font-size:12px}
+.garnished-invoice-meta-row{display:flex;justify-content:space-between;gap:9px;margin-bottom:3px}
+.garnished-invoice-meta-row strong{font-size:11px;font-weight:550;text-align:right;overflow-wrap:anywhere}
+.garnished-invoice-service{display:flex;gap:12px;align-items:flex-start;border-top:1px solid #e6ece4;padding:8px 0 11px;font-size:11px}
+.garnished-invoice-service strong{font-size:10px;letter-spacing:.5px;flex:none}
+.garnished-invoice-lines table{width:100%;border-collapse:collapse;table-layout:fixed;font:11px/1.3 Inter,system-ui,sans-serif}
+.garnished-invoice-lines th{background:#edf3ec;text-align:left;font-size:9px;letter-spacing:.3px;padding:8px 7px;color:#3c6247}
+.garnished-invoice-lines th:nth-child(1){width:61%}
+.garnished-invoice-lines th:nth-child(2){width:9%;text-align:center}
+.garnished-invoice-lines th:nth-child(3){width:15%;text-align:right}
+.garnished-invoice-lines th:nth-child(4){width:15%;text-align:right}
+.garnished-invoice-lines td{padding:6px 7px;border-bottom:1px solid #ebefe9;vertical-align:top;overflow-wrap:anywhere}
+.garnished-invoice-lines td:nth-child(2){text-align:center}
+.garnished-invoice-lines td:nth-child(n+3){text-align:right;font-variant-numeric:tabular-nums}
+.garnished-invoice-lines td strong{font-weight:570}
+.garnished-invoice-lines td small{display:block;font-size:9px;color:#829086;margin-top:1px}
+.garnished-invoice-document-summary{width:min(290px,100%);margin:11px 0 12px auto}
+.garnished-invoice-document-summary .garnished-invoice-meta-row{padding:2px 0;font-size:11px}
+.garnished-invoice-document-summary .garnished-invoice-document-total{display:flex;justify-content:space-between;border-top:1px solid #b8cbb8;padding:7px 0;margin-top:5px;font-weight:700;font-size:14px}
+.garnished-invoice-document-details{border-top:1px solid #e5ece3;padding:9px 0;break-inside:avoid}
+.garnished-invoice-document-details p{margin:0;color:#394c3d;font-size:10px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.garnished-invoice-document footer{text-align:center;margin:20px 0 5px;color:#617966;font-size:10px;font-style:italic}
+.invoice-screen-preview .garnished-invoice-document{width:100%}
+@media(max-width:600px){.garnished-invoice-document-brand img{width:38px;height:38px}.garnished-invoice-document-brand strong{font-size:15px}.garnished-invoice-document-number h1{font-size:15px}.garnished-invoice-document-meta{gap:10px}.garnished-invoice-lines td{padding:6px 3px}.garnished-invoice-lines th{padding:7px 3px}}
+@media print{
+ #invoicePrint{display:block!important;padding:10mm 12mm!important}
+ .garnished-invoice-document{max-width:none;font-size:10pt}
+ .garnished-invoice-lines tr{break-inside:avoid}
+ .garnished-invoice-document-brand strong{font-size:19pt}
+}
 </style></head><body><header><div class="brand" style="display:flex;align-items:center;gap:9px"><img src="data:image/jpeg;base64,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" alt="Garnished Catering 901 logo" style="width:50px;height:50px;object-fit:contain;border-radius:50%" onerror="this.replaceWith(document.createTextNode('GARNISH.ED'))"><div>GARNISH<span class="leaf">.</span>ED<small>catering & events</small></div></div><div class="actions"><nav class="garnished-global-nav" aria-label="Garnished destinations"><a href="/">Home</a><a href="/contact">Plan an event</a><a href="/?client=1">Client</a><a href="/?team=1">Team</a></nav><div class="garnished-social-links garnished-header-social" aria-label="Follow Garnished Catering"><a class="garnished-social-link" href="https://www.instagram.com/garnishedcatering901/" target="_blank" rel="noopener noreferrer" aria-label="Garnished Catering on Instagram" title="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.5" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg></a><a class="garnished-social-link" href="https://www.facebook.com/garnishedcatering901" target="_blank" rel="noopener noreferrer" aria-label="Garnished Catering on Facebook" title="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="currentColor"><path d="M14.2 21v-8.2h2.8l.45-3.3h-3.25V7.4c0-.96.27-1.62 1.64-1.62h1.74V2.82c-.3-.04-1.33-.13-2.53-.13-2.5 0-4.2 1.52-4.2 4.32V9.5H8v3.3h2.85V21z"/></svg></a></div><span id="modeBadge">Garnished Catering</span><button class="btn alt hide" id="signout">Sign out</button></div></header>
 <div id="publicLanding" class="garnished-public" style="display:none">
  <div class="garnished-hero-wrap">
@@ -1703,38 +1749,39 @@ function recordPayment(id){
 }
 function printInvoice(id,openPrinter=true){
  const i=state.invoices.find(x=>x.id===id);if(!i)return;
- const items=state.invoice_items.filter(x=>x.invoice_id===id);
- const customer=state.customers.find(x=>x.id===i.customer_id);
- const event=state.events.find(x=>x.id===i.event_id);
- const subtotal=items.reduce((n,x)=>n+Number(x.quantity)*Number(x.unit_price),0);
- const paymentRows=state.payments.filter(x=>x.invoice_id===id);
- const paid=invoicePaid(id),total=invoiceTotal(id),due=Math.max(0,total-paid);
- const customerInfo=customer?[customer.address,customer.phone,customer.email].filter(Boolean).map(esc).join(' · '):'';
- const eventInfo=event?[event.title,fmt(event.event_at),event.venue,event.address,(event.guest_count??'')!==''?event.guest_count+' guests':''].filter(Boolean).map(esc).join(' · '):'';
- $('invoicePrint').innerHTML=
-  '<div style="display:flex;align-items:center;justify-content:space-between;gap:18px;border-bottom:2px solid #425f49;padding-bottom:12px">'+
-  '<div><img alt="Garnished Catering logo" style="width:75px;height:75px;object-fit:contain;float:left;margin-right:13px" src="data:image/jpeg;base64,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"><div style="font-family:Georgia,serif;font-size:28px;letter-spacing:1px">GARNISH.ED</div><div style="color:#52745a;letter-spacing:3px;font-size:11px">CATERING 901</div><p style="font-size:12px">Garnishedcatering@gmail.com · (901) 482-3096</p></div>'+
-  '<h1 style="font:normal 30px Georgia,serif">INVOICE</h1></div>'+
-  '<div style="display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;margin:20px 0">'+
-  '<section><strong>Client information</strong><p>'+esc(person(i.customer_id))+'</p><p>'+customerInfo+'</p></section>'+
-  '<section><strong>Invoice details</strong><p>Invoice #: '+esc(i.invoice_number)+'</p>'+
-  (i.reference_number?'<p>Reference: '+esc(i.reference_number)+'</p>':'')+
-  '<p>Issued: '+fmt(i.issue_date)+' · Due: '+fmt(i.due_date)+'</p></section></div>'+
-  (eventInfo?'<p><strong>Catering event:</strong> '+eventInfo+'</p>':'')+
-  (invoiceFulfillmentSummary(i)?'<p><strong>Fulfillment:</strong> '+esc(invoiceFulfillmentSummary(i))+'</p>':'')+
-  (i.event_service_notes?'<p><strong>Service details:</strong> '+esc(i.event_service_notes)+'</p>':'')+
-  '<table><thead><tr><th>#</th><th>Category</th><th>Item / description</th><th>Qty</th><th>Unit price</th><th>Amount</th></tr></thead><tbody>'+
-  items.map((x,k)=>'<tr><td>'+(k+1)+'</td><td>'+esc(x.item_category||'—')+'</td><td>'+esc(x.description)+'</td><td>'+esc(x.quantity)+'</td><td>'+money(x.unit_price)+'</td><td>'+money(Number(x.quantity)*Number(x.unit_price))+'</td></tr>').join('')+
-  '</tbody></table>'+
-  '<div style="margin:18px 0 22px auto;max-width:310px"><p>Subtotal: '+money(subtotal)+'</p><p>Discount: -'+money(i.discount_amount)+'</p><p>Tax: '+money(i.tax_amount)+'</p>'+
-  '<h2>Total: '+money(total)+'</h2><p>Deposit requested: '+money(i.deposit_required)+'</p>'+
-  '<p>Payments received: -'+money(paid)+'</p><h2 style="border-top:2px solid #42634b;padding-top:10px">Balance due: '+money(due)+'</h2></div>'+
-  (paymentRows.length?'<h3>Payment history</h3><table><thead><tr><th>Date</th><th>Method</th><th>Reference</th><th>Amount</th></tr></thead><tbody>'+
-  paymentRows.map(p=>'<tr><td>'+fmt(p.paid_at)+'</td><td>'+esc(p.method||'Not specified')+'</td><td>'+esc(p.reference||'')+'</td><td>'+money(p.amount)+'</td></tr>').join('')+'</tbody></table>':'')+
-  (i.payment_terms?'<h3>Terms & conditions</h3><p>'+esc(i.payment_terms)+'</p>':'')+
-  (i.payment_methods?'<h3>Accepted payment methods</h3><p>'+esc(i.payment_methods)+'</p>':'')+
-  (i.notes?'<h3>Additional notes</h3><p>'+esc(i.notes)+'</p>':'')+
-  (activeBusiness?.invoice_footer?'<p style="text-align:center;font-style:italic;margin-top:32px">'+esc(activeBusiness.invoice_footer)+'</p>':'<p style="text-align:center;font-style:italic;margin-top:32px">Thank you for choosing Garnished Catering!</p>');
+ const items=state.invoice_items.filter(x=>x.invoice_id===id).sort((a,b)=>Number(a.position||0)-Number(b.position||0));
+ const customer=state.customers.find(x=>x.id===i.customer_id),event=state.events.find(x=>x.id===i.event_id);
+ const subtotal=items.reduce((n,x)=>n+Number(x.quantity)*Number(x.unit_price),0),paid=invoicePaid(id),total=invoiceTotal(id),due=Math.max(0,total-paid);
+ const payments=state.payments.filter(x=>x.invoice_id===id);
+ const orderDetails=String(i.notes||i.event_service_notes||'').trim();
+ const row=(label,value)=>'<div class="garnished-invoice-meta-row"><span>'+esc(label)+'</span><strong>'+esc(value||'—')+'</strong></div>';
+ $('invoicePrint').innerHTML='<article class="garnished-invoice-document">'+
+ '<div class="garnished-invoice-document-head">'+
+ '<div class="garnished-invoice-document-brand"><img src="/assets/garnished-circle-transparent.png" width="49" height="49" alt="Garnished Catering"><div><strong>GARNISH.ED</strong><small>CATERING & EVENTS</small></div></div>'+
+ '<div class="garnished-invoice-document-number"><h1>INVOICE</h1><strong>'+esc(i.invoice_number)+'</strong><small>'+esc(displayStatus(i.status))+'</small></div></div>'+
+ '<div class="garnished-invoice-document-meta"><section><h2>BILL TO</h2><strong>'+esc(customer?.company_name||customer?.name||'Customer not linked')+'</strong>'+
+ (customer?.company_name&&customer?.name?'<div>'+esc(customer.name)+'</div>':'')+
+ (customer?.billing_address||customer?.address?'<div>'+esc(customer.billing_address||customer.address)+'</div>':'')+
+ (customer?.email?'<div>'+esc(customer.email)+'</div>':'')+
+ (customer?.phone?'<div>'+esc(customer.phone)+'</div>':'')+
+ '</section><section><h2>INVOICE INFORMATION</h2>'+row('Issued',fmt(i.issue_date))+row('Due',fmt(i.due_date))+
+ (i.reference_number?row('Reference',i.reference_number):'')+
+ (event?row('Event',event.title):'')+
+ '</section></div>'+
+ (invoiceFulfillmentSummary(i)?'<div class="garnished-invoice-service"><strong>FULFILLMENT</strong><span>'+esc(invoiceFulfillmentSummary(i))+'</span></div>':'')+
+ '<div class="garnished-invoice-lines"><table><thead><tr><th>DESCRIPTION</th><th>QTY</th><th>UNIT PRICE</th><th>AMOUNT</th></tr></thead><tbody>'+
+ (items.length?items.map(x=>'<tr><td><strong>'+esc(x.description)+'</strong><small>'+esc(x.item_category||'Food / service')+'</small></td><td>'+esc(Number(x.quantity))+'</td><td>'+money(x.unit_price)+'</td><td>'+money(Number(x.quantity)*Number(x.unit_price))+'</td></tr>').join(''):'<tr><td colspan="4">No items</td></tr>')+
+ '</tbody></table></div>'+
+ '<div class="garnished-invoice-document-summary">'+
+ row('Subtotal',money(subtotal))+row('Discount','-'+money(i.discount_amount))+row('Tax',money(i.tax_amount))+
+ '<div class="garnished-invoice-document-total"><span>Total</span><strong>'+money(total)+'</strong></div>'+
+ row('Payments received','-'+money(paid))+row('Balance due',money(due))+
+ (Number(i.deposit_required)>0?row('Deposit requested',money(i.deposit_required)):'')+'</div>'+
+ (payments.length?'<section class="garnished-invoice-document-details"><h2>PAYMENT HISTORY</h2>'+payments.map(p=>'<p>'+fmt(p.paid_at)+' · '+esc(p.method||'Payment')+' · '+money(p.amount)+'</p>').join('')+'</section>':'')+
+ (orderDetails?'<section class="garnished-invoice-document-details"><h2>ORDER DETAILS</h2><p>'+esc(orderDetails)+'</p></section>':'')+
+ (i.payment_terms?'<section class="garnished-invoice-document-details"><h2>PAYMENT TERMS</h2><p>'+esc(i.payment_terms)+'</p></section>':'')+
+ (i.payment_methods?'<section class="garnished-invoice-document-details"><h2>PAYMENT METHODS</h2><p>'+esc(i.payment_methods)+'</p></section>':'')+
+ '<footer>'+esc(activeBusiness?.invoice_footer||'Thank you for choosing Garnished Catering!')+'</footer></article>';
  if(openPrinter)window.print();
 }
 function previewInvoice(id){
