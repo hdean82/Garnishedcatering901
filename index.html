@@ -2394,7 +2394,9 @@ async function createInvoiceFromInquiry(id){
  const email=String(q.email||'').trim().toLowerCase();
  const parts=q.first_name&&q.last_name?{first_name:q.first_name,last_name:q.last_name}:splitCustomerName(q.contact_name);
  if(!parts.first_name||!parts.last_name)return toast('This inquiry needs both a first and last name before creating the customer');
- const button=$('createInquiryInvoice');if(button)button.disabled=true;
+ const button=$('createInquiryInvoice');
+ if(!button||button.disabled)return;
+ button.disabled=true;
  try{
   let customer=state.customers.find(x=>String(x.email||'').trim().toLowerCase()===email);
   if(customer){
@@ -2447,6 +2449,8 @@ async function createInvoiceFromInquiry(id){
 
 function openGarnishedInquiry(id){
  const x=(state.garnished_inquiries||[]).find(x=>x.id===id);if(!x)return toast('Inquiry not found');
+ const eventIds=new Set(state.events.filter(event=>event.source_inquiry_id===id).map(event=>event.id));
+ const documents=state.invoices.filter(invoice=>eventIds.has(invoice.event_id));
  const row=(label,v)=>'<div class="item"><strong>'+esc(label)+'</strong><span style="overflow-wrap:anywhere">'+esc(v||'Not specified')+'</span></div>';
  openModal('Catering inquiry · '+x.contact_name,
   row('Submitted',new Date(x.created_at).toLocaleString())+
@@ -2456,10 +2460,15 @@ function openGarnishedInquiry(id){
   row('Venue',x.event_location)+row('Service style',x.service_style)+row('Budget range',x.budget_range)+
   row('Menu ideas',x.menu_ideas)+row('Dietary needs',x.dietary_notes)+row('Other notes',x.special_notes)+
   row('Preferred contact',x.preferred_contact)+
+  (documents.length?'<h3>Linked quotes and invoices</h3>'+documents.map(invoice=>
+   '<div class="item"><div><strong>'+(invoice.document_type==='quote'?'Quote ':'Invoice ')+esc(invoice.invoice_number)+'</strong><div class="muted">'+esc(displayStatus(invoice.status))+'</div></div><button type="button" class="btn alt" data-inquiry-invoice="'+esc(invoice.id)+'">Open</button></div>').join(''):'')+
   '<label for="inquiryStatusSelect">Inquiry status</label><select id="inquiryStatusSelect">'+
   ['new','contacted','quoted','booked','closed'].map(s=>'<option value="'+s+'"'+(s===x.status?' selected':'')+'>'+s.toUpperCase()+'</option>').join('')+'</select>'+
-  '<div class="actions"><button class="btn" type="button" id="createInquiryInvoice">Create invoice with these details</button><button class="btn alt" type="button" id="saveInquiryStatus">Save status</button><button class="btn alt" type="button" id="closeInquiry">Close</button></div>');
+  '<div class="actions"><button class="btn" type="button" id="createInquiryInvoice">'+(documents.length?'Create another quote or invoice':'Create invoice with these details')+'</button><button class="btn alt" type="button" id="saveInquiryStatus">Save status</button><button class="btn alt" type="button" id="closeInquiry">Close</button></div>');
  $('closeInquiry').onclick=closeModal;
+ $('modalBody').querySelectorAll('[data-inquiry-invoice]').forEach(button=>{
+  button.onclick=()=>openInvoice(button.dataset.inquiryInvoice);
+ });
  $('createInquiryInvoice').onclick=()=>createInvoiceFromInquiry(id);
  $('saveInquiryStatus').onclick=async()=>{
   const btn=$('saveInquiryStatus');btn.disabled=true;
