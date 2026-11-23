@@ -14,7 +14,7 @@ Deno.serve(async req=>{
  let value:Record<string,unknown>;
  try{value=await req.json();if(!value||typeof value!=="object"||Array.isArray(value))throw Error()}catch{return send({error:"Invalid form data"},400)}
  if(value.website)return send({received:true}); // honeypot: do not reveal filtering
- const name=str(value.contact_name,120),email=str(value.email,254).toLowerCase(),phone=str(value.phone,40);
+ const firstName=str(value.first_name,80),lastName=str(value.last_name,80);const name=str(value.contact_name,120)||[firstName,lastName].filter(Boolean).join(' '),email=str(value.email,254).toLowerCase(),phone=str(value.phone,40);
  const type=str(value.event_type,80),date=str(value.event_date,15),flex=value.date_flexible===true;
  const count=value.guest_count?Number(value.guest_count):null;
  if(name.length<2||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!type)return send({error:"Name, valid email and event type are required"},400);
@@ -38,7 +38,7 @@ Deno.serve(async req=>{
  if(rateError)return send({error:"Please try again later"},503);
  if((recent||0)>=3)return send({error:"Too many inquiries from this connection. Please call us."},429);
  const record={
-  business_id:BUSINESS_ID,contact_name:name,email,phone:phone||null,
+  business_id:BUSINESS_ID,contact_name:name,first_name:firstName||null,last_name:lastName||null,email,phone:phone||null,
   organization:str(value.organization,120)||null,event_type:type,event_date:date||null,date_flexible:flex,
   service_time:str(value.service_time,60)||null,guest_count:count,event_location:str(value.event_location,240)||null,
   service_style:service||null,menu_ideas:str(value.menu_ideas,1200)||null,
