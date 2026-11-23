@@ -10,7 +10,7 @@ begin
  if p_accept is distinct from true then raise exception 'You must accept the terms'; end if;
  select u.email into v_email from auth.users u where u.id=v_user and u.email_confirmed_at is not null;
  if v_email is null then raise exception 'Verify your email to approve'; end if;
- select * into v_i from public.invoices where id=p_invoice_id and status in ('sent','partial','overdue') for share;
+ select * into v_i from public.invoices where id=p_invoice_id and status in ('sent','partial','paid','overdue') for share;
  if not found then raise exception 'This invoice is not open for approval'; end if;
  if not exists(select 1 from public.garnished_client_access ca where ca.user_id=v_user and ca.business_id=v_i.business_id and ca.customer_id=v_i.customer_id) then raise exception 'Access denied'; end if;
  select pg_catalog.btrim(b.client_approval_terms) into v_terms from public.businesses b where b.id=v_i.business_id;
