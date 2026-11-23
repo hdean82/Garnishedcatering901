@@ -62,6 +62,35 @@ with sync_playwright() as playwright:
             expect(page.locator("#forgotPassword")).to_be_hidden()
             page.locator("#login").click()
             expect(page.locator("label[for='password']")).to_have_text("Password")
+            # Mock verified recovery token; do not contact Supabase or alter accounts.
+            changes = []
+            def fake_auth_user(route):
+                if route.request.method == "PUT":
+                    changes.append("update")
+                    if len(changes) == 1:
+                        route.fulfill(status=422, content_type="application/json",
+                                      body='{"message":"Password rejected by policy"}')
+                    else:
+                        route.fulfill(status=200, content_type="application/json",
+                                      body='{"id":"fictional-user","email":"tester@example.invalid"}')
+                else:
+                    route.fulfill(status=200, content_type="application/json",
+                                  body='{"id":"fictional-user","email":"tester@example.invalid"}')
+            page.route("https://vufrlkxftvpouhsqlmpb.supabase.co/auth/v1/user", fake_auth_user)
+            page.evaluate("localStorage.clear()")
+            page.goto("http://127.0.0.1:8765/?team=1#access_token=fictional-token&refresh_token=fictional-refresh&type=recovery")
+            expect(page.locator("#firstAccess h1")).to_have_text("Choose a new password")
+            page.locator("#newPassword").fill("fictional-password-123")
+            page.locator("#setPasswordForm button[type='submit']").click()
+            expect(page.locator("#authError")).to_contain_text("Password rejected by policy")
+            expect(page.locator("#newPassword")).to_have_value("fictional-password-123")
+            page.locator("#setPasswordForm button[type='submit']").click()
+            expect(page.locator("#firstAccess")).to_be_hidden()
+            assert len(changes) == 2, changes
+            page.unroute("https://vufrlkxftvpouhsqlmpb.supabase.co/auth/v1/user", fake_auth_user)
+            page.evaluate("localStorage.clear()")
+            page.goto("http://127.0.0.1:8765/?team=1#error=access_denied")
+            expect(page.locator("#authError")).to_contain_text("expired or has already been used")
             page.evaluate(fixture)
             search = page.locator("#invoiceSearch")
             search.fill("Quote 1042")
