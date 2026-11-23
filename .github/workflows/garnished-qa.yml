@@ -1,0 +1,71 @@
+name: Garnished QA
+
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 8 * * *'
+  workflow_run:
+    workflows: [Deploy Garnished Catering Studio to Cloudflare Workers]
+    branches: [main]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  browser-regression:
+    if: github.event_name != 'workflow_run'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install playwright==1.62.0
+      - run: python -m playwright install --with-deps ${{ matrix.browser }}
+      - run: python scripts/prepare-cloudflare-release.py
+      - run: |
+          python -m http.server 8765 --bind 127.0.0.1 --directory dist &
+          trap 'kill $!' EXIT
+          for attempt in {1..20}; do
+            if curl -fsS http://127.0.0.1:8765/ -o /dev/null; then break; fi
+            sleep 1
+          done
+          python scripts/test-studio.py ${{ matrix.browser }}
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failure-${{ matrix.browser }}
+          path: qa-artifacts/
+
+  live-smoke:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check deployed version and public routes
+        env:
+          GARNISHED_EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: python scripts/check-live.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run Lighthouse on the public homepage
+        run: |
+          mkdir -p qa-artifacts
+          npx --yes lighthouse@12.0.0 https://garnishedcatering.com/ \
+            --chrome-flags='--headless --no-sandbox' --quiet \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --output=html --output-path=qa-artifacts/lighthouse-home.html
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-audit
+          path: qa-artifacts/
