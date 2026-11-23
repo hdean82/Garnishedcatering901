@@ -11,6 +11,7 @@ root = Path(__file__).resolve().parent.parent
 dist = root / "dist"
 required = [
     "index.html",
+    "_headers",
     "manifest.webmanifest",
     "assets/garnished-logo.svg",
     "assets/garnished-circle-transparent.png",
