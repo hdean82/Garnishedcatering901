@@ -2133,7 +2133,7 @@ function clientReviewActionButtons(i){
  if(i.approval)return '<div class="garnished-client-review"><p class="garnished-review-confirmed">Approved '+esc(new Date(i.approval.approved_at).toLocaleString())+' · The accepted document and terms were saved at approval; later edits are not covered.</p>'+
  '<form data-client-message="'+esc(i.id)+'"><label for="clientReview_'+esc(i.id)+'">Ask a question or request a follow-up</label><textarea id="clientReview_'+esc(i.id)+'" maxlength="2000" required rows="3"></textarea><button type="submit" class="btn alt">Send to Garnished</button></form>'+
  (i.review_messages||[]).map(m=>'<div class="garnished-review-history"><strong>'+esc(m.author_role==='team'?'Garnished':'You')+'</strong><p>'+esc(m.body)+'</p></div>').join('')+'</div>';
- const canApprove=['sent','partial','overdue'].includes(i.status);
+ const canApprove=['sent','partial','paid','overdue'].includes(i.status);
  const terms=String(i.approval_terms||'').trim();
  return '<section class="garnished-client-review"><h3>Review & approval</h3>'+
  '<p class="small">Need a change or have a question? Send a message below. Garnished will review it in the team Studio.</p>'+
@@ -2343,6 +2343,16 @@ async function createInvoiceFromInquiry(id){
   if($('f_customer_id'))$('f_customer_id').value=customer.id;
   if($('f_event_id'))$('f_event_id').value=event.id;
   if($('f_notes'))$('f_notes').value=inquiryOrderDetails(q);
+  if(q.service_style==='Pickup'&&$('f_fulfillment_method'))$('f_fulfillment_method').value='pickup';
+  if(['Drop-off delivery','Buffet setup','Plated service','Staffed catering'].includes(q.service_style)&&$('f_fulfillment_method')){
+    $('f_fulfillment_method').value='delivery';
+    if($('f_delivery_address_mode'))$('f_delivery_address_mode').value='custom';
+    if($('f_delivery_place_name'))$('f_delivery_place_name').value=String(q.event_location||'').slice(0,160);
+    // A venue or city from an inquiry is not necessarily a street address.
+    // Require confirmation of the actual destination before saving.
+    if($('f_delivery_address'))$('f_delivery_address').value='';
+  }
+  $('f_fulfillment_method')?.dispatchEvent(new Event('change',{bubbles:true}));
   if($('f_payment_terms')&&activeBusiness?.default_payment_terms)$('f_payment_terms').value=activeBusiness.default_payment_terms;
   $('f_customer_id')?.dispatchEvent(new Event('change',{bubbles:true}));
   toast('Inquiry details filled. Add food and prices, then save the document.');
