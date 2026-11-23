@@ -2025,7 +2025,9 @@ function editInvoiceLine(invoiceId,lineId){
        openInvoice(invoiceId);toast(item?'Item updated':'Item added')}catch(err){toast('Could not save item: '+err.message)}
  };
 }
+const pendingInvoicePayments=new Set();
 function recordPayment(id){
+ if(pendingInvoicePayments.has(id))return toast('A payment is already being saved for this invoice');
  const invoice=state.invoices.find(x=>x.id===id);if(!invoice)return;
  const remaining=Math.max(0,invoiceTotal(id)-invoicePaid(id));
  const methods=[['Cash','Cash'],['Zelle','Zelle'],['Cash App','Cash App'],['Venmo','Venmo'],['Credit / debit card','Credit / debit card'],['Bank transfer / ACH','Bank transfer / ACH'],['Check','Check'],['Other','Other']];
@@ -2044,13 +2046,17 @@ function recordPayment(id){
  $('f_method_choice').onchange=()=>{$('f_method_other').parentElement.style.display=$('f_method_choice').value==='Other'?'block':'none'};
  $('paymentForm').onsubmit=async e=>{
   e.preventDefault();
+  if(pendingInvoicePayments.has(id))return;
   const amount=Number(val('amount'));
   const method=val('method_choice')==='Other'?val('method_other').trim():val('method_choice');
   if(!Number.isFinite(amount)||amount<=0||!method)return toast('Enter a valid received amount and payment method');
   if(amount>remaining+0.005&&!confirm('This payment exceeds the recorded balance by '+money(amount-remaining)+'. Record it anyway?'))return;
-  const btn=$('savePayment');btn.disabled=true;btn.textContent='Saving…';
-  try{await add('payments',{invoice_id:id,amount,method,reference:val('reference')});openInvoice(id);toast('Payment recorded')}
+  const btn=$('savePayment');
+  pendingInvoicePayments.add(id);
+  btn.disabled=true;btn.textContent='Saving…';
+  try{await add('payments',{invoice_id:id,amount,method,reference:val('reference')});if($('savePayment')===btn&&$('modal').classList.contains('open'))openInvoice(id);toast('Payment recorded')}
   catch(err){btn.disabled=false;btn.textContent='Record received payment';toast('Payment could not be saved: '+err.message)}
+  finally{pendingInvoicePayments.delete(id)}
  };
 }
 function printInvoice(id,openPrinter=true){
