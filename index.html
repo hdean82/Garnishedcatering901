@@ -2239,8 +2239,18 @@ function printClientInvoiceCopy(index){
  const card=document.querySelector('[data-client-invoice-card="'+n+'"]');
  const output=$('invoicePrint');
  if(!selected||!card||!output)return toast('Could not prepare invoice copy');
- const content=card.cloneNode(true);
- content.querySelectorAll('button').forEach(button=>button.remove());
+ const content=card.querySelector('.client-invoice-document').cloneNode(true);
+ const approvalNotice=card.querySelector('.garnished-review-confirmed');
+ if(approvalNotice)content.append(approvalNotice.cloneNode(true));
+ const invoice=selected.invoice;
+ const terms=invoice.approval?invoice.approval.terms_snapshot:card.querySelector('.garnished-approval-terms')?.textContent;
+ if(terms){
+  const heading=document.createElement('h3');
+  heading.textContent=invoice.approval?'Terms accepted at approval':'Terms & conditions';
+  const paragraph=document.createElement('p');
+  paragraph.style.whiteSpace='pre-wrap';paragraph.textContent=terms;
+  content.append(heading,paragraph);
+ }
  const title=document.createElement('div');
  title.style.cssText='border-bottom:2px solid #425f49;padding-bottom:14px;margin-bottom:20px';
  const business=document.createElement('h1');business.textContent=selected.account.business.name||'Garnished Catering';
@@ -2258,7 +2268,7 @@ function clientPortalHtml(accounts){
  let html='<div class="client-only"><div class="client-nav"><a class="garnished-client-brand" href="/"><img src="/assets/garnished-circle-transparent.png" alt="Garnished Catering" width="42" height="42"><span>GARNISH.ED <small>Client Portal</small></span></a><nav aria-label="Client pages">'+tabs+'</nav></div>';
  if(clientPortalTab==='home'){
   html+='<section class="panel client-hero garnished-client-home"><div class="garnished-client-hero-head"><div><p class="garnished-eyebrow">YOUR GARNISHED SPACE</p><h1>Welcome'+(customer?.name?', '+esc(customer.name):'')+'</h1><p>Your gatherings, details and invoices—thoughtfully kept together.</p></div><img src="/assets/garnished-circle-transparent.png" width="100" height="100" alt="Garnished Catering"></div>'+
-   '<div class="cards"><div class="panel"><span class="muted">Invoices</span><h2>'+all.length+'</h2></div><div class="panel"><span class="muted">Outstanding balance</span><h2>'+money(unpaid)+'</h2></div></div>'+
+   '<div class="cards"><div class="panel"><span class="muted">Quotes &amp; invoices</span><h2>'+all.length+'</h2></div><div class="panel"><span class="muted">Outstanding balance</span><h2>'+money(unpaid)+'</h2></div></div>'+
    '<button class="btn" type="button" data-client-tab="invoices">View my invoices</button></section>';
   if(!accounts.length)html+='<div class="panel"><p>No customer account is linked to this email yet. If you received an invitation, open its link while signed in.</p></div>';
   html+='<div class="garnished-client-guide"><div class="panel"><span class="garnished-guide-number">01</span><h2>Keep your details close</h2><p>Manage your own login, personal information and password in My Account.</p><button class="btn alt" type="button" data-client-tab="account">Account settings</button></div>'+
@@ -2284,14 +2294,14 @@ function clientPortalHtml(accounts){
   if(!all.length)html+='<p>No quotes or invoices are available for your account yet.</p>';
   for(const [invoiceIndex,{invoice:i}] of all.entries()){
    const {subtotal,total,paid,balance}=clientInvoiceFigures(i);
-   html+='<article class="client-invoice" data-client-invoice-card="'+invoiceIndex+'"><div class="actions" style="justify-content:space-between;align-items:center"><h2>'+esc(i.document_type==='quote'?'Quote ':'Invoice ')+esc(i.invoice_number)+'</h2><span class="pill">'+esc(displayStatus(i.status))+'</span></div>'+
+   html+='<article class="client-invoice" data-client-invoice-card="'+invoiceIndex+'"><div class="client-invoice-document"><div class="actions" style="justify-content:space-between;align-items:center"><h2>'+esc(i.document_type==='quote'?'Quote ':'Invoice ')+esc(i.invoice_number)+'</h2><span class="pill">'+esc(displayStatus(i.status))+'</span></div>'+
     '<p class="muted">Issued '+fmt(i.issue_date)+' · Due '+fmt(i.due_date)+'</p>'+
     (i.fulfillment_method==='pickup'?'<p class="small"><strong>Pickup</strong></p>':i.fulfillment_method==='delivery'?'<p class="small"><strong>Delivery:</strong> '+esc([i.delivery_place_name,i.delivery_display_address].filter(Boolean).join(' · ')||'Address to be confirmed')+'</p>':'')+
     (i.items||[]).map(x=>'<div class="item"><div><strong>'+esc(x.description)+'</strong><p class="muted">'+esc(x.item_category||'Catering item')+'</p></div><span>'+esc(x.quantity)+' × '+money(x.unit_price)+'</span></div>').join('')+
     '<div class="right"><p>Subtotal: '+money(subtotal)+' · Tax: '+money(i.tax_amount)+' · Discount: '+money(i.discount_amount)+'</p>'+
     '<p>Total: '+money(total)+' · Paid: '+money(paid)+'</p>'+
     (Number(i.deposit_required)>0?'<p>Deposit requested: '+money(i.deposit_required)+'</p>':'')+
-    (i.document_type==='quote'?'<h2>Estimated total '+money(total)+'</h2>':'<h2>Balance due '+money(balance)+'</h2>')+'</div>'+ 
+    (i.document_type==='quote'?'<h2>Estimated total '+money(total)+'</h2>':'<h2>Balance due '+money(balance)+'</h2>')+'</div></div>'+
     '<div class="actions" style="margin-top:12px"><button type="button" class="btn alt" data-client-print="'+invoiceIndex+'">Print / Save PDF</button></div>'+
     clientReviewActionButtons(i)+'</article>';
   }
