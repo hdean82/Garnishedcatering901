@@ -28,5 +28,14 @@ begin
  ) into v_snapshot;
  insert into public.garnished_client_approvals(business_id,invoice_id,customer_id,approved_by,approved_email,terms_snapshot,invoice_snapshot)
  values(v_i.business_id,v_i.id,v_i.customer_id,v_user,v_email,v_terms,v_snapshot) returning id into v_record;
- return jsonb_build_object('approved',true,'approval_id',v_record);
+ if v_i.event_id is not null then
+   update public.events set status='confirmed'
+   where id=v_i.event_id and business_id=v_i.business_id and customer_id=v_i.customer_id and status in ('quoted','inquiry');
+ else
+   insert into public.events(business_id,customer_id,title,status,event_at,menu_notes)
+   values(v_i.business_id,v_i.customer_id,coalesce(v_i.document_type,'invoice')||' '||v_i.invoice_number||' — approved', 'confirmed',null,'Approved catering document. Confirm service date and time before scheduling.')
+   returning id into v_record;
+   update public.invoices set event_id=v_record where id=v_i.id and business_id=v_i.business_id;
+ end if;
+ return jsonb_build_object('approved',true,'approval_id',(select a.id from public.garnished_client_approvals a where a.invoice_id=v_i.id));
 end $function$
