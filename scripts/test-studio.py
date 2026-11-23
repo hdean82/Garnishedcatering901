@@ -65,16 +65,21 @@ with sync_playwright() as playwright:
             # Mock verified recovery token; do not contact Supabase or alter accounts.
             changes = []
             def fake_auth_user(route):
-                if route.request.method == "PUT":
+                cors = {"Access-Control-Allow-Origin": "*",
+                        "Access-Control-Allow-Headers": "authorization,apikey,content-type",
+                        "Access-Control-Allow-Methods": "GET,PUT,OPTIONS"}
+                if route.request.method == "OPTIONS":
+                    route.fulfill(status=204, headers=cors)
+                elif route.request.method == "PUT":
                     changes.append("update")
                     if len(changes) == 1:
-                        route.fulfill(status=422, content_type="application/json",
+                        route.fulfill(status=422, headers=cors, content_type="application/json",
                                       body='{"message":"Password rejected by policy"}')
                     else:
-                        route.fulfill(status=200, content_type="application/json",
+                        route.fulfill(status=200, headers=cors, content_type="application/json",
                                       body='{"id":"fictional-user","email":"tester@example.invalid"}')
                 else:
-                    route.fulfill(status=200, content_type="application/json",
+                    route.fulfill(status=200, headers=cors, content_type="application/json",
                                   body='{"id":"fictional-user","email":"tester@example.invalid"}')
             page.route("https://vufrlkxftvpouhsqlmpb.supabase.co/auth/v1/user", fake_auth_user)
             page.evaluate("localStorage.clear()")
