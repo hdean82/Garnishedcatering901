@@ -815,7 +815,7 @@ function updateGarnishedBackToTop(){const b=$('garnishedBackToTop');if(b)b.hidde
 window.addEventListener('scroll',()=>{if(garnishedScrollQueued)return;garnishedScrollQueued=true;requestAnimationFrame(()=>{garnishedScrollQueued=false;updateGarnishedBackToTop()})},{passive:true});
 $('garnishedBackToTop').onclick=()=>window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
 
-function render(){nav();refreshClientMessageBell();const pages={dashboard:dashboard,reviews:teamReviewPage,inquiries:inquiryList,events:()=>recordList('events'),planner:planner,tasks:()=>recordList('tasks'),messages:messagePage,customers:()=>recordList('customers'),invoices:invoiceList,shopping_items:shoppingPage,settings:settingsPage,account:studioAccountPage,team:teamPage};$('content').innerHTML=(pages[view]||dashboard)();if($('emailInviteForm'))$('emailInviteForm').onsubmit=createInvite;document.querySelectorAll('[data-team-review]').forEach(b=>b.onclick=()=>openTeamReview(b.dataset.teamReview));document.querySelectorAll('[data-open-inquiry]').forEach(b=>b.onclick=()=>openGarnishedInquiry(b.dataset.openInquiry));if($('clientInviteForm'))$('clientInviteForm').onsubmit=createClientInvite;if($('bulkShopping'))$('bulkShopping').onclick=openBatchShopping;if($('settingsForm'))$('settingsForm').onsubmit=saveBusinessSettings;if($('menuCatalogForm'))$('menuCatalogForm').onsubmit=saveMenuCatalogItem;document.querySelectorAll('[data-menu-edit]').forEach(b=>b.onclick=()=>editMenuCatalogItem(b.dataset.menuEdit));document.querySelectorAll('[data-menu-archive]').forEach(b=>b.onclick=()=>toggleMenuCatalogItem(b.dataset.menuArchive));if($('reminderDigestForm'))$('reminderDigestForm').onsubmit=saveReminderDigestPreferences;if($('accountProfileForm'))wirePersonalAccountSettings();if($('homeInstall'))$('homeInstall').onclick=showInstallInstructions;if($('refreshReminderCenter'))$('refreshReminderCenter').onclick=async()=>{await load()};document.querySelectorAll('[data-reminder-done]').forEach(b=>b.onclick=()=>{if(confirm('Mark this task complete?'))update('tasks',b.dataset.reminderDone,{status:'done',completed_at:now()}).catch(err=>toast(err.message))});document.querySelectorAll('[data-reminder-invoice]').forEach(b=>b.onclick=()=>openInvoice(b.dataset.reminderInvoice));document.querySelectorAll('[data-cal-date]').forEach(b=>b.onclick=()=>{selectedCalendarDate=b.dataset.calDate;calendarCursor=new Date(selectedCalendarDate+'T12:00:00');view='planner';plannerMode='calendar';render()});document.querySelectorAll('[data-planner-mode]').forEach(b=>b.onclick=()=>{plannerMode=b.dataset.plannerMode;render()});document.querySelectorAll('[data-cal-step]').forEach(b=>b.onclick=()=>{const cursor=calendarCursor||new Date(dateKey(new Date())+'T12:00:00');calendarCursor=new Date(cursor.getFullYear(),cursor.getMonth()+Number(b.dataset.calStep),1);selectedCalendarDate=[calendarCursor.getFullYear(),String(calendarCursor.getMonth()+1).padStart(2,'0'),'01'].join('-');render()});document.querySelectorAll('[data-cal-event]').forEach(b=>b.onclick=()=>openPlanner(b.dataset.calEvent));document.querySelectorAll('[data-schedule-event]').forEach(b=>b.onclick=()=>scheduleEventFromCalendar(b.dataset.scheduleEvent));if($('importInvoices'))$('importInvoices').onclick=openInvoiceImport;if($('importPdfInvoice'))$('importPdfInvoice').onclick=openPdfInvoiceImport;if($('invoiceSearch'))$('invoiceSearch').oninput=filterInvoicesInPlace;if($('invoiceStatusFilter'))$('invoiceStatusFilter').onchange=filterInvoicesInPlace;if($('refreshMessages'))$('refreshMessages').onclick=async()=>{await load();view='messages';render()};if($('newConversation'))$('newConversation').onclick=newConversation;if($('startFirstConversation'))$('startFirstConversation').onclick=newConversation;document.querySelectorAll('[data-thread]').forEach(b=>b.onclick=()=>{const id=b.dataset.thread;const t=(state.messages||[]).find(m=>m.id===id);const u=new URL(location.href);u.searchParams.set('thread',id);history.replaceState(null,'',u.pathname+u.search);render()});if($('sendMessageForm'))$('sendMessageForm').onsubmit=sendMessage;document.querySelectorAll('[data-reply]').forEach(b=>b.onclick=()=>{const target=$('messageReplyTo');if(target){target.value=b.dataset.reply;$('messageBody').focus();$('replyHint').textContent='Replying in this conversation';}});document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.copy);toast('Invite code copied')}catch{toast('Select and copy the code manually')}});document.querySelectorAll('[data-customer-edit]').forEach(b=>b.onclick=()=>editCustomer(b.dataset.customerEdit));document.querySelectorAll('[data-new]').forEach(n=>n.onclick=()=>newRecord(n.dataset.new));document.querySelectorAll('[data-quick-new]').forEach(b=>b.onclick=()=>newRecord(b.dataset.quickNew));document.querySelectorAll('[data-quick-shopping]').forEach(b=>b.onclick=openBatchShopping);document.querySelectorAll('[data-quick-draft]').forEach(b=>b.onclick=()=>openInvoice(b.dataset.quickDraft));document.querySelectorAll('[data-done]').forEach(n=>n.onclick=()=>update(n.dataset.done,n.dataset.id,{[n.dataset.done==='shopping_items'?'purchased':'status']:n.dataset.done==='shopping_items'?n.dataset.current!=='true':'done',...(n.dataset.done==='tasks'?{completed_at:now()}:{})}).catch(e=>toast(e.message)));document.querySelectorAll('[data-remove]').forEach(n=>n.onclick=()=>remove(n.dataset.remove,n.dataset.id).catch(e=>toast(e.message)));document.querySelectorAll('[data-plan]').forEach(n=>n.onclick=()=>openPlanner(n.dataset.plan));document.querySelectorAll('[data-beo]').forEach(n=>n.onclick=()=>openEventCommandSheet(n.dataset.beo));document.querySelectorAll('[data-generate]').forEach(n=>n.onclick=()=>generatePrep(n.dataset.generate));document.querySelectorAll('[data-openinvoice]').forEach(n=>n.onclick=()=>openInvoice(n.dataset.openinvoice));document.querySelectorAll('[data-pay]').forEach(n=>n.onclick=()=>recordPayment(n.dataset.pay));}
+function render(){nav();refreshClientMessageBell();const pages={dashboard:dashboard,reviews:teamReviewPage,inquiries:inquiryList,events:()=>recordList('events'),planner:planner,tasks:()=>recordList('tasks'),messages:messagePage,customers:()=>recordList('customers'),invoices:invoiceList,shopping_items:shoppingPage,settings:settingsPage,account:studioAccountPage,team:teamPage};$('content').innerHTML=(pages[view]||dashboard)();if($('emailInviteForm'))$('emailInviteForm').onsubmit=createInvite;document.querySelectorAll('[data-team-review]').forEach(b=>b.onclick=()=>openTeamReview(b.dataset.teamReview));document.querySelectorAll('[data-open-inquiry]').forEach(b=>b.onclick=()=>openGarnishedInquiry(b.dataset.openInquiry));if($('clientInviteForm'))$('clientInviteForm').onsubmit=createClientInvite;if($('bulkShopping'))$('bulkShopping').onclick=openBatchShopping;if($('settingsForm'))$('settingsForm').onsubmit=saveBusinessSettings;if($('menuCatalogForm'))$('menuCatalogForm').onsubmit=saveMenuCatalogItem;document.querySelectorAll('[data-menu-edit]').forEach(b=>b.onclick=()=>editMenuCatalogItem(b.dataset.menuEdit));document.querySelectorAll('[data-menu-archive]').forEach(b=>b.onclick=()=>toggleMenuCatalogItem(b.dataset.menuArchive));if($('reminderDigestForm'))$('reminderDigestForm').onsubmit=saveReminderDigestPreferences;if($('accountProfileForm'))wirePersonalAccountSettings();if($('homeInstall'))$('homeInstall').onclick=showInstallInstructions;if($('refreshReminderCenter'))$('refreshReminderCenter').onclick=async()=>{await load()};document.querySelectorAll('[data-reminder-done]').forEach(b=>b.onclick=()=>{if(confirm('Mark this task complete?'))update('tasks',b.dataset.reminderDone,{status:'done',completed_at:now()}).catch(err=>toast(err.message))});document.querySelectorAll('[data-reminder-invoice]').forEach(b=>b.onclick=()=>openInvoice(b.dataset.reminderInvoice));document.querySelectorAll('[data-cal-date]').forEach(b=>b.onclick=()=>{selectedCalendarDate=b.dataset.calDate;calendarCursor=new Date(selectedCalendarDate+'T12:00:00');view='planner';plannerMode='calendar';render()});document.querySelectorAll('[data-planner-mode]').forEach(b=>b.onclick=()=>{plannerMode=b.dataset.plannerMode;render()});document.querySelectorAll('[data-cal-step]').forEach(b=>b.onclick=()=>{const cursor=calendarCursor||new Date(dateKey(new Date())+'T12:00:00');calendarCursor=new Date(cursor.getFullYear(),cursor.getMonth()+Number(b.dataset.calStep),1);selectedCalendarDate=[calendarCursor.getFullYear(),String(calendarCursor.getMonth()+1).padStart(2,'0'),'01'].join('-');render()});document.querySelectorAll('[data-cal-event]').forEach(b=>b.onclick=()=>openPlanner(b.dataset.calEvent));document.querySelectorAll('[data-schedule-event]').forEach(b=>b.onclick=()=>scheduleEventFromCalendar(b.dataset.scheduleEvent));if($('importInvoices'))$('importInvoices').onclick=openInvoiceImport;if($('importPdfInvoice'))$('importPdfInvoice').onclick=openPdfInvoiceImport;if($('invoiceSearch'))$('invoiceSearch').oninput=filterInvoicesInPlace;if($('invoiceStatusFilter'))$('invoiceStatusFilter').onchange=filterInvoicesInPlace;if(view==='messages')wireTeamMessages();document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.copy);toast('Invite code copied')}catch{toast('Select and copy the code manually')}});document.querySelectorAll('[data-customer-edit]').forEach(b=>b.onclick=()=>editCustomer(b.dataset.customerEdit));document.querySelectorAll('[data-new]').forEach(n=>n.onclick=()=>newRecord(n.dataset.new));document.querySelectorAll('[data-quick-new]').forEach(b=>b.onclick=()=>newRecord(b.dataset.quickNew));document.querySelectorAll('[data-quick-shopping]').forEach(b=>b.onclick=openBatchShopping);document.querySelectorAll('[data-quick-draft]').forEach(b=>b.onclick=()=>openInvoice(b.dataset.quickDraft));document.querySelectorAll('[data-done]').forEach(n=>n.onclick=()=>update(n.dataset.done,n.dataset.id,{[n.dataset.done==='shopping_items'?'purchased':'status']:n.dataset.done==='shopping_items'?n.dataset.current!=='true':'done',...(n.dataset.done==='tasks'?{completed_at:now()}:{})}).catch(e=>toast(e.message)));document.querySelectorAll('[data-remove]').forEach(n=>n.onclick=()=>remove(n.dataset.remove,n.dataset.id).catch(e=>toast(e.message)));document.querySelectorAll('[data-plan]').forEach(n=>n.onclick=()=>openPlanner(n.dataset.plan));document.querySelectorAll('[data-beo]').forEach(n=>n.onclick=()=>openEventCommandSheet(n.dataset.beo));document.querySelectorAll('[data-generate]').forEach(n=>n.onclick=()=>generatePrep(n.dataset.generate));document.querySelectorAll('[data-openinvoice]').forEach(n=>n.onclick=()=>openInvoice(n.dataset.openinvoice));document.querySelectorAll('[data-pay]').forEach(n=>n.onclick=()=>recordPayment(n.dataset.pay));}
 function header(t,sub,button){return `<div class="actions" style="justify-content:space-between;align-items:end"><div><h1>${t}</h1><p>${sub}</p></div>${button?`<button class="btn" data-new="${button}">+ Add ${button==='shopping_items'?'item':button.slice(0,-1)}</button>`:''}</div>`}
 
 function reminderCenter(){
@@ -865,19 +865,49 @@ return header('Good to have it all in one place','Your Garnished Catering comman
 reminderCenter()+unscheduledBookingPanel()+miniCalendar()+`<div class="cols"><div class="panel"><h2>Next catering events</h2>${eventRows||'<div class="empty">No upcoming events yet</div>'}<button class="btn alt" onclick="view='planner';plannerMode='calendar';render()">View schedule</button></div><div class="panel"><h2>What needs doing</h2>${taskRows||'<div class="empty">You are caught up on tasks</div>'}<button class="btn alt" onclick="view='tasks';render()">All tasks</button></div></div>`+
 `<div class="notice">${overdue.length?'⚠ '+overdue.length+' overdue task(s) need attention. ':''}Reminders are saved as dates in the app. Automatic phone alerts and email delivery are not enabled in this prototype.</div>`;
 }
+const teamReplyDrafts=new Map(),sendingReplies=new Set();
 let messagePollInFlight=false;
-async function refreshMessagesQuietly(){
- if(messagePollInFlight||view!=='messages'||!session?.access_token||document.visibilityState==='hidden'||$('modal')?.classList.contains('open'))return;
- const draft=$('messageBody');
- if(draft&&(document.activeElement===draft||draft.value.trim()))return;
+function teamDraftKey(thread){return JSON.stringify([businessId,session?.user?.id,thread])}
+function selectTeamThread(id){
+ const url=new URL(location.href);url.searchParams.set('thread',id);
+ history.replaceState(null,'',url.pathname+url.search);
+}
+function wireTeamMessages(){
+ $('refreshMessages').onclick=()=>refreshMessagesQuietly(true);
+ $('newConversation').onclick=newConversation;
+ if($('startFirstConversation'))$('startFirstConversation').onclick=newConversation;
+ document.querySelectorAll('[data-thread]').forEach(button=>button.onclick=()=>{selectTeamThread(button.dataset.thread);render()});
+ const form=$('sendMessageForm');if(!form)return;
+ const key=teamDraftKey(form.dataset.threadId),draft=teamReplyDrafts.get(key);
+ const input=$('messageBody'),target=$('messageReplyTo'),defaultTarget=target.value;
+ if(draft){input.value=draft.body;target.value=draft.target}
+ function remember(){
+  if(input.value||target.value!==defaultTarget)teamReplyDrafts.set(key,{body:input.value,target:target.value});
+  else teamReplyDrafts.delete(key);
+ }
+ input.oninput=remember;
+ form.onsubmit=sendMessage;
+ if(sendingReplies.has(key)){input.readOnly=true;$('sendMessageButton').disabled=true}
+ document.querySelectorAll('[data-reply]').forEach(button=>button.onclick=()=>{
+  if(sendingReplies.has(key))return;
+  target.value=button.dataset.reply;remember();input.focus();$('replyHint').textContent='Replying in this conversation';
+ });
+}
+async function refreshMessagesQuietly(manual=false){
+ const userId=session?.user?.id,workspace=businessId;
+ const paused=()=>view!=='messages'||!session?.access_token||document.visibilityState==='hidden'||$('modal')?.classList.contains('open')||
+  (!manual&&$('messageBody')&&(document.activeElement===$('messageBody')||$('messageBody').value.trim()));
+ if(messagePollInFlight||paused())return;
+ const before=state.messages;
  messagePollInFlight=true;
  try{
-  const latest=await req('/rest/v1/messages?select=*&business_id=eq.'+encodeURIComponent(businessId)+'&order=created_at.desc');
-  const old=state.messages||[];
+  const latest=await req('/rest/v1/messages?select=*&business_id=eq.'+encodeURIComponent(workspace)+'&order=created_at.desc');
+  if(paused()||userId!==session?.user?.id||workspace!==businessId||before!==state.messages)return;
+  const old=before||[];
   if(latest.length!==old.length||latest.some((m,i)=>m.id!==old[i]?.id||m.body!==old[i]?.body)){
    state.messages=latest;render();
   }
- }catch(e){if(!session)toast('Sign in again to see messages')}
+ }catch(err){if(manual)toast('Could not refresh team messages: '+err.message)}
  finally{messagePollInFlight=false}
 }
 setInterval(refreshMessagesQuietly,12000);
@@ -897,6 +927,7 @@ function messagePage(){
  }).sort((a,b)=>new Date(b.last)-new Date(a.last));
  const current=new URLSearchParams(location.search).get('thread');
  const thread=threads.find(t=>t.id===current)||threads[0];
+ if(thread&&thread.id!==current)selectTeamThread(thread.id);
  let html=header('Team messages','Keep conversations and replies together in one shared inbox.');
  html+='<div class="actions" style="margin-bottom:8px"><button class="btn alt" type="button" id="refreshMessages">Refresh messages</button></div><div class="cols" style="grid-template-columns:minmax(190px,.8fr) minmax(0,1.7fr)">';
  html+='<div class="panel"><div class="actions" style="justify-content:space-between"><h2>Conversations</h2><button class="btn alt" id="newConversation">New</button></div>';
@@ -905,7 +936,7 @@ function messagePage(){
  if(thread){
  html+='<h2>'+esc(thread.title)+'</h2><div style="max-height:480px;overflow:auto;display:flex;flex-direction:column;gap:12px;margin-bottom:18px">';
  html+=thread.rows.map(m=>'<div style="max-width:92%;align-self:'+(m.sender_id===me?'flex-end':'flex-start')+';background:'+(m.sender_id===me?'#e2ecdf':'#f2f4f0')+';border-radius:14px;padding:12px"><strong>'+esc(label(m.sender_id))+'</strong><span class="muted" style="display:block;font-size:11px">'+esc(new Date(m.created_at).toLocaleString())+'</span><div style="white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0">'+esc(m.body)+'</div><button class="btn alt" type="button" data-reply="'+esc(m.id)+'" style="padding:5px 9px;font-size:12px">Reply</button></div>').join('');
- html+='</div><form id="sendMessageForm"><input type="hidden" id="messageReplyTo" value="'+esc(thread.rows.at(-1)?.id||thread.id)+'"><p class="small" id="replyHint">Reply to this conversation</p><label for="messageBody">Your message</label><textarea id="messageBody" required placeholder="Write a reply..." rows="3"></textarea><button type="submit" class="btn" id="sendMessageButton" style="margin-top:9px">Send reply</button></form>';
+ html+='</div><form id="sendMessageForm" data-thread-id="'+esc(thread.id)+'"><input type="hidden" id="messageReplyTo" value="'+esc(thread.rows.at(-1)?.id||thread.id)+'"><p class="small" id="replyHint">Reply to this conversation</p><label for="messageBody">Your message</label><textarea id="messageBody" required placeholder="Write a reply..." rows="3"></textarea><button type="submit" class="btn" id="sendMessageButton" style="margin-top:9px">Send reply</button></form>';
  }else{html+='<h2>Start a conversation</h2><p>Create a conversation for Justin or your team.</p><button type="button" class="btn" id="startFirstConversation">New message</button>'}
  html+='</div></div>';
  return html;
@@ -916,10 +947,30 @@ function newConversation(){
 }
 function focusThread(id){document.querySelectorAll('[data-thread]').forEach(b=>{if(b.dataset.thread===id)b.click()})}
 async function sendMessage(e){
- e.preventDefault();const body=$('messageBody')?.value.trim(),reply_to_id=$('messageReplyTo')?.value;
- if(!body)return;
- const btn=$('sendMessageButton');btn.disabled=true;btn.textContent='Sending…';
- try{await req('/rest/v1/messages','POST',{business_id:businessId,sender_id:session.user.id,body,reply_to_id});await load();view='messages';render();toast('Reply sent')}catch(err){toast(err.message);btn.disabled=false;btn.textContent='Send reply'}
+ e.preventDefault();
+ const form=e.currentTarget,thread=form.dataset.threadId,key=teamDraftKey(thread);
+ const input=form.querySelector('textarea'),body=input.value.trim(),reply_to_id=form.querySelector('#messageReplyTo').value;
+ if(!body||sendingReplies.has(key))return;
+ const userId=session.user.id,workspace=businessId,button=form.querySelector('[type="submit"]');
+ sendingReplies.add(key);button.disabled=true;input.readOnly=true;button.textContent='Sending…';
+ try{
+  const rows=await req('/rest/v1/messages','POST',{business_id:workspace,sender_id:userId,body,reply_to_id});
+  teamReplyDrafts.delete(key);
+  if(userId!==session?.user?.id||workspace!==businessId)return;
+  if(rows?.[0])state.messages=[rows[0],...state.messages.filter(m=>m.id!==rows[0].id)];
+  if(view==='messages'&&$('sendMessageForm')?.dataset.threadId===thread){
+   sendingReplies.delete(key);render();
+  }
+  toast('Reply sent');
+ }catch(err){toast('Could not send reply: '+err.message)}
+ finally{
+  sendingReplies.delete(key);
+  const current=$('sendMessageForm');
+  if(current&&teamDraftKey(current.dataset.threadId)===key){
+   current.querySelector('textarea').readOnly=false;
+   const send=current.querySelector('[type="submit"]');send.disabled=false;send.textContent='Send reply';
+  }
+ }
 }
 function recordList(t){const titles={events:['Catering events','Track every booking, venue, menu and date'],tasks:['Tasks & reminders','Who needs to do what, and when'],messages:['Messages for wife','Keep requests and handoffs in one place'],customers:['Customers','Contact details and event relationships'],shopping_items:['Shopping & Prep','The list for every event']};let rows=state[t]||[];return header(...titles[t],t)+`<div class="panel">${!rows.length?'<div class="empty">Nothing here yet. Add your first item above.</div>':rows.map(r=>{const detail=t==='events'?`${fmt(r.event_at)} · ${esc(r.venue||'Venue TBD')} · ${esc(r.guest_count||'—')} guests`:t==='tasks'?`${fmt(r.due_at)} · ${esc(r.priority)} priority · ${esc(displayStatus(r.status))}`:t==='messages'?`${fmt(r.created_at)} · ${esc(r.body)}`:t==='customers'?`${esc(r.phone||'No phone')} · ${esc(r.email||'')}`:`${esc(r.quantity||'')} · ${r.purchased?'Purchased':'To buy'}`;return `<div class="item"><div><strong>${esc(r.title||r.name||r.subject||r.item||'Message')}</strong><div class="muted">${detail}</div>${t==='tasks'&&r.status!=='done'&&r.due_at&&new Date(r.due_at)<new Date()?'<span class="pill" style="color:#a52f27;background:#ffeae6">Overdue</span>':''}</div><div class="actions">${t==='tasks'&&r.status!=='done'?`<button class="btn alt" data-done="tasks" data-id="${r.id}">Done</button>`:''}${t==='shopping_items'?`<button class="btn alt" data-done="shopping_items" data-id="${r.id}" data-current="${r.purchased?'true':''}">${r.purchased?'Undo':'Bought'}</button>`:''}${t==='events'?`<button class="btn alt" data-plan="${r.id}">Plan prep</button><button class="btn alt" data-beo="${r.id}">Event sheet</button>`:''}${t==='customers'?`<button class="btn alt" data-customer-edit="${r.id}">Open profile</button>`:''}<button class="btn alt" data-remove="${t}" data-id="${r.id}">Delete</button></div></div>`}).join('')}</div>`}
 
