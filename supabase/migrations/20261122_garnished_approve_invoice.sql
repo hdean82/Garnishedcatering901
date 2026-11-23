@@ -10,7 +10,7 @@ begin
  if p_accept is distinct from true then raise exception 'You must accept the terms'; end if;
  select u.email into v_email from auth.users u where u.id=v_user and u.email_confirmed_at is not null;
  if v_email is null then raise exception 'Verify your email to approve'; end if;
- select * into v_i from public.invoices where id=p_invoice_id and status in ('sent','partial','overdue') for share;
+ select * into v_i from public.invoices where id=p_invoice_id and status in ('sent','partial','paid','overdue') for share;
  if not found then raise exception 'This invoice is not open for approval'; end if;
  if not exists(select 1 from public.garnished_client_access ca where ca.user_id=v_user and ca.business_id=v_i.business_id and ca.customer_id=v_i.customer_id) then raise exception 'Access denied'; end if;
  select pg_catalog.btrim(b.client_approval_terms) into v_terms from public.businesses b where b.id=v_i.business_id;
@@ -28,5 +28,14 @@ begin
  ) into v_snapshot;
  insert into public.garnished_client_approvals(business_id,invoice_id,customer_id,approved_by,approved_email,terms_snapshot,invoice_snapshot)
  values(v_i.business_id,v_i.id,v_i.customer_id,v_user,v_email,v_terms,v_snapshot) returning id into v_record;
- return jsonb_build_object('approved',true,'approval_id',v_record);
+ if v_i.event_id is not null then
+   update public.events set status='confirmed'
+   where id=v_i.event_id and business_id=v_i.business_id and customer_id=v_i.customer_id and status in ('quoted','inquiry');
+ else
+   insert into public.events(business_id,customer_id,title,status,event_at,menu_notes)
+   values(v_i.business_id,v_i.customer_id,coalesce(v_i.document_type,'invoice')||' '||v_i.invoice_number||' — approved', 'confirmed',null,'Approved catering document. Confirm service date and time before scheduling.')
+   returning id into v_record;
+   update public.invoices set event_id=v_record where id=v_i.id and business_id=v_i.business_id;
+ end if;
+ return jsonb_build_object('approved',true,'approval_id',(select a.id from public.garnished_client_approvals a where a.invoice_id=v_i.id));
 end $function$
