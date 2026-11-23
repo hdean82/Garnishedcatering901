@@ -61,7 +61,7 @@ with sync_playwright() as playwright:
             expect(page.locator("#modalBody")).to_contain_text("$157.88")
             expect(page.locator("#modalBody")).to_contain_text("Please use the side entrance.")
             expect(page.locator("#modalBody")).not_to_contain_text("Private kitchen note")
-            page.evaluate("window.print=()=>{ window.printCalls=(window.printCalls||0)+1 }")
+            page.evaluate("() => { window.printCalls=0; window.print=()=>{ window.printCalls++ }; }")
             page.locator("#previewPrint").click()
             assert page.evaluate("window.printCalls") == 1
             expect(page.locator("#invoicePrint")).to_contain_text("Please use the side entrance.")
