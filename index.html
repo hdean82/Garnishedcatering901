@@ -1238,7 +1238,7 @@ function showPdfInvoiceReview(data,raw){
  value('deposit_required','Deposit requested ($)','number',data.deposit_required??0)+
  '</div><h2 style="margin-top:15px">Food and service items</h2>'+
  '<div id="pdfInvoiceLines"></div><button class="btn alt" type="button" id="pdfAddLine">+ Add item</button>'+
- '<label for="pdf_notes">Additional invoice notes</label><textarea id="pdf_notes" maxlength="1800" rows="3" placeholder="Add information you need preserved."></textarea>'+
+ '<label for="pdf_notes">Order Details</label><textarea id="pdf_notes" maxlength="1800" rows="3" placeholder="Add information you need preserved."></textarea>'+
  '<div id="pdfComparison" class="notice" style="margin-top:12px"></div>'+
  '<details style="margin-top:14px"><summary>Check text extracted from original PDF</summary><pre style="white-space:pre-wrap;word-break:break-word;max-height:230px;overflow:auto;font-size:11px">'+esc(raw.slice(0,15000))+'</pre></details>'+
  '<label class="account-show-password" style="margin-top:14px"><input type="checkbox" id="pdfReviewed"> I reviewed the customer, totals and every line item against the original PDF.</label>'+
