@@ -839,14 +839,14 @@ function reminderCenter(){
  }
  for(const i of state.invoices||[]){
   if(!i.due_date||!invoiceNeedsPayment(i))continue;
-  const due=Date.parse(i.due_date+'T23:59:59');
+  const due=Date.parse(datetime(i.due_date+'T23:59:59'));
   if(!Number.isFinite(due)||due>soonMs)continue;
   const customer=(state.customers||[]).find(c=>c.id===i.customer_id);
-  alerts.push({id:i.id,type:'invoice',title:i.invoice_number||'Invoice',kind:due<nowMs?'Invoice overdue':'Invoice due soon',at:due,detail:customer?.name||'Customer not linked'});
+  alerts.push({id:i.id,type:'invoice',title:i.invoice_number||'Invoice',kind:due<nowMs?'Invoice overdue':'Invoice due soon',at:due,date:i.due_date,detail:customer?.name||'Customer not linked'});
  }
  alerts.sort((a,b)=>a.at-b.at);
  const display=alerts.slice(0,10).map(a=>
-  '<div class="item"><div><span class="pill'+(a.at<nowMs?' high':'')+'">'+esc(a.kind)+'</span><strong style="margin-top:6px">'+esc(a.title)+'</strong><div class="muted">'+esc(a.detail)+(a.at?' · '+esc(new Date(a.at).toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'})):'')+'</div></div><div class="actions">'+
+  '<div class="item"><div><span class="pill'+(a.at<nowMs?' high':'')+'">'+esc(a.kind)+'</span><strong style="margin-top:6px">'+esc(a.title)+'</strong><div class="muted">'+esc(a.detail)+(a.at?' · '+esc(a.date?fmt(a.date):new Date(a.at).toLocaleString('en-US',{timeZone:activeBusiness?.timezone||'America/Chicago',dateStyle:'medium',timeStyle:'short'})):'')+'</div></div><div class="actions">'+
   (a.type==='task'?'<button class="btn alt" data-reminder-done="'+esc(a.id)+'">Mark done</button>':'<button class="btn alt" data-reminder-invoice="'+esc(a.id)+'">Open invoice</button>')+
   '</div></div>').join('');
  return '<section class="panel" aria-labelledby="reminderCenterHeading">'+
@@ -2152,9 +2152,11 @@ function printInvoice(id,openPrinter=true){
  if(openPrinter)window.print();
 }
 function previewInvoice(id){
+ const invoice=state.invoices.find(record=>record.id===id);
+ if(!invoice)return toast('Document unavailable');
  printInvoice(id,false);
  const preview=$('invoicePrint').innerHTML;
- openModal(i.document_type==='quote'?'Quote preview':'Invoice preview',
+ openModal(invoice.document_type==='quote'?'Quote preview':'Invoice preview',
   '<div style="background:#f6f7f3;padding:10px;border:1px solid #dce5dd;border-radius:12px;overflow:auto;max-height:65vh">'+
   '<div class="invoice-screen-preview" style="background:white;color:#203129;padding:18px;min-width:0;width:100%;max-width:850px;margin:auto;font:13px Georgia,serif">'+preview+'</div></div>'+
   '<div class="actions" style="margin-top:14px"><button class="btn" id="previewPrint">Print / Save PDF</button><button class="btn alt" id="previewBack">Back to invoice</button></div>');
