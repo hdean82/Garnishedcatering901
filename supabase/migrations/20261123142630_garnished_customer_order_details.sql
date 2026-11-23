@@ -91,7 +91,7 @@ begin
  if v_count=0 then raise exception 'Invoice has no items'; end if;
  select jsonb_build_object(
  'document_type',v_i.document_type,'invoice_number',v_i.invoice_number,'issue_date',v_i.issue_date,'due_date',v_i.due_date,
- 'notes',v_i.notes,'client_order_details',v_i.client_order_details,'fulfillment_method',v_i.fulfillment_method,'delivery_place_name',v_i.delivery_place_name,
+ 'client_order_details',v_i.client_order_details,'fulfillment_method',v_i.fulfillment_method,'delivery_place_name',v_i.delivery_place_name,
  'delivery_address',v_i.delivery_address,'status_at_approval',v_i.status,
  'tax_amount',v_i.tax_amount,'discount_amount',v_i.discount_amount,'deposit_required',v_i.deposit_required,
  'items',(select coalesce(jsonb_agg(jsonb_build_object('description',it.description,'quantity',it.quantity,'unit_price',it.unit_price,'category',it.item_category) order by it.position),'[]'::jsonb) from public.invoice_items it where it.invoice_id=v_i.id and it.business_id=v_i.business_id),
