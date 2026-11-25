@@ -49,6 +49,56 @@ with sync_playwright() as playwright:
                 response = page.goto("http://127.0.0.1:8765" + path)
                 assert response.ok, path
                 expect(page.locator(element)).to_be_visible()
+            # First-time invitation and returning-user screens, without sending emails.
+            for portal in ("team", "client"):
+                page.evaluate("localStorage.clear()")
+                page.goto(f"http://127.0.0.1:8765/?{portal}=1&invite=fictional-only")
+                expect(page.locator("#firstAccess h1")).to_have_text("Create a password")
+                expect(page.locator("#inviteEmail")).to_be_visible()
+                page.locator("#existingLogin").click()
+                expect(page.locator("#password")).to_be_visible()
+                expect(page.locator("#firstAccess")).to_be_hidden()
+            page.evaluate("localStorage.clear()")
+            page.goto("http://127.0.0.1:8765/?team=1")
+            page.locator("#signup").click()
+            expect(page.locator("label[for='password']")).to_have_text("Create a password")
+            expect(page.locator("#forgotPassword")).to_be_hidden()
+            page.locator("#login").click()
+            expect(page.locator("label[for='password']")).to_have_text("Password")
+            # Mock verified recovery token; do not contact Supabase or alter accounts.
+            changes = []
+            def fake_auth_user(route):
+                cors = {"Access-Control-Allow-Origin": "*",
+                        "Access-Control-Allow-Headers": "authorization,apikey,content-type",
+                        "Access-Control-Allow-Methods": "GET,PUT,OPTIONS"}
+                if route.request.method == "OPTIONS":
+                    route.fulfill(status=204, headers=cors)
+                elif route.request.method == "PUT":
+                    changes.append("update")
+                    if len(changes) == 1:
+                        route.fulfill(status=422, headers=cors, content_type="application/json",
+                                      body='{"message":"Password rejected by policy"}')
+                    else:
+                        route.fulfill(status=200, headers=cors, content_type="application/json",
+                                      body='{"id":"fictional-user","email":"tester@example.invalid"}')
+                else:
+                    route.fulfill(status=200, headers=cors, content_type="application/json",
+                                  body='{"id":"fictional-user","email":"tester@example.invalid"}')
+            page.route("https://vufrlkxftvpouhsqlmpb.supabase.co/auth/v1/user", fake_auth_user)
+            page.evaluate("localStorage.clear()")
+            page.goto("http://127.0.0.1:8765/?team=1#access_token=fictional-token&refresh_token=fictional-refresh&type=recovery")
+            expect(page.locator("#firstAccess h1")).to_have_text("Choose a new password")
+            page.locator("#newPassword").fill("fictional-password-123")
+            page.locator("#setPasswordForm button[type='submit']").click()
+            expect(page.locator("#authError")).to_contain_text("Password rejected by policy")
+            expect(page.locator("#newPassword")).to_have_value("fictional-password-123")
+            page.locator("#setPasswordForm button[type='submit']").click()
+            expect(page.locator("#firstAccess")).to_be_hidden()
+            assert len(changes) == 2, changes
+            page.unroute("https://vufrlkxftvpouhsqlmpb.supabase.co/auth/v1/user", fake_auth_user)
+            page.evaluate("localStorage.clear()")
+            page.goto("http://127.0.0.1:8765/?team=1#error=access_denied")
+            expect(page.locator("#authError")).to_contain_text("expired or has already been used")
             page.evaluate(fixture)
             search = page.locator("#invoiceSearch")
             search.fill("Quote 1042")
